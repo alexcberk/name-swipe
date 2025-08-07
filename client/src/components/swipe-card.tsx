@@ -58,7 +58,7 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
       if (card) {
         card.classList.remove('swipe-right', 'swipe-left');
       }
-    }, 300);
+    }, 400);
   };
 
   const { 
@@ -111,7 +111,7 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
         {/* First card (top) */}
         <div 
           ref={cardRef}
-          className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab active:cursor-grabbing"
+          className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab active:cursor-grabbing transition-transform duration-200 ease-out"
           style={{ zIndex: 3 }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}

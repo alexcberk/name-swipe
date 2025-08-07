@@ -10,11 +10,13 @@ export function useSwipe({ onSwipeLeft, onSwipeRight, threshold = 100 }: UseSwip
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
   const isDragging = useRef(false);
+  const hasTriggered = useRef(false);
 
   const handleStart = useCallback((clientX: number, clientY: number) => {
     startX.current = clientX;
     startY.current = clientY;
     isDragging.current = true;
+    hasTriggered.current = false;
   }, []);
 
   const handleMove = useCallback((clientX: number, clientY: number) => {
@@ -31,13 +33,14 @@ export function useSwipe({ onSwipeLeft, onSwipeRight, threshold = 100 }: UseSwip
   }, []);
 
   const handleEnd = useCallback((clientX: number, clientY: number) => {
-    if (!isDragging.current || startX.current === null || startY.current === null) return;
+    if (!isDragging.current || startX.current === null || startY.current === null || hasTriggered.current) return;
 
     const deltaX = clientX - startX.current;
     const deltaY = clientY - startY.current;
 
     // Only trigger swipe if horizontal movement is greater than vertical
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > threshold) {
+      hasTriggered.current = true;
       if (deltaX > 0) {
         onSwipeRight();
       } else {
@@ -51,6 +54,7 @@ export function useSwipe({ onSwipeLeft, onSwipeRight, threshold = 100 }: UseSwip
   }, [onSwipeLeft, onSwipeRight, threshold]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.target !== e.currentTarget) return; // Only handle if clicking on the card itself
     e.preventDefault();
     handleStart(e.clientX, e.clientY);
   }, [handleStart]);
@@ -66,6 +70,7 @@ export function useSwipe({ onSwipeLeft, onSwipeRight, threshold = 100 }: UseSwip
   }, [handleEnd]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.target !== e.currentTarget) return; // Only handle if touching the card itself
     e.preventDefault();
     const touch = e.touches[0];
     handleStart(touch.clientX, touch.clientY);

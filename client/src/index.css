@@ -188,25 +188,33 @@
 }
 
 @keyframes swipeRight {
-  to {
+  0% {
+    transform: translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
     transform: translateX(100vw) rotate(30deg);
     opacity: 0;
   }
 }
 
 @keyframes swipeLeft {
-  to {
+  0% {
+    transform: translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
     transform: translateX(-100vw) rotate(-30deg);
     opacity: 0;
   }
 }
 
 .swipe-right {
-  animation: swipeRight 0.3s ease-out forwards;
+  animation: swipeRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 .swipe-left {
-  animation: swipeLeft 0.3s ease-out forwards;
+  animation: swipeLeft 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 .card-stack {
@@ -215,9 +223,14 @@
 
 .floating-action {
   box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-  transition: all 0.2s ease;
+  transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.floating-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
 }
 
 .floating-action:active {
-  transform: scale(0.95);
+  transform: scale(0.95) translateY(-1px);
 }
