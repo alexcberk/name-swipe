@@ -54,7 +54,6 @@ export function useSwipe({ onSwipeLeft, onSwipeRight, threshold = 100 }: UseSwip
   }, [onSwipeLeft, onSwipeRight, threshold]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.target !== e.currentTarget) return; // Only handle if clicking on the card itself
     e.preventDefault();
     handleStart(e.clientX, e.clientY);
   }, [handleStart]);
@@ -70,7 +69,6 @@ export function useSwipe({ onSwipeLeft, onSwipeRight, threshold = 100 }: UseSwip
   }, [handleEnd]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.target !== e.currentTarget) return; // Only handle if touching the card itself
     e.preventDefault();
     const touch = e.touches[0];
     handleStart(touch.clientX, touch.clientY);

@@ -124,22 +124,22 @@ export default function Session() {
               <Button
                 size="sm"
                 variant={genderFilter === 'boy' ? 'default' : 'ghost'}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-all flex items-center justify-center ${
                   genderFilter === 'boy' ? 'bg-boy-blue text-white hover:bg-blue-600' : 'text-gray-600'
                 }`}
                 onClick={() => setGenderFilter('boy')}
               >
-                ♂
+                <span className="text-center">♂</span>
               </Button>
               <Button
                 size="sm"
                 variant={genderFilter === 'girl' ? 'default' : 'ghost'}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-all flex items-center justify-center ${
                   genderFilter === 'girl' ? 'bg-girl-pink text-white hover:bg-pink-600' : 'text-gray-600'
                 }`}
                 onClick={() => setGenderFilter('girl')}
               >
-                ♀
+                <span className="text-center">♀</span>
               </Button>
             </div>
             <Button
@@ -155,7 +155,7 @@ export default function Session() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 max-w-md mx-auto px-4 py-4 pb-24 overflow-hidden swipe-container flex flex-col">
+      <div className="flex-1 max-w-md mx-auto px-4 py-4 pb-20 overflow-y-auto swipe-container flex flex-col">
         {activeTab === 'swipe' && (
           <div>
             {/* Session Info */}
@@ -197,12 +197,12 @@ export default function Session() {
         )}
 
         {activeTab === 'matches' && (
-          <MatchesView sessionId={sessionId!} />
+          <MatchesView sessionId={sessionId!} userId={userId} />
         )}
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} sessionId={sessionId} />
 
       {/* Share Modal */}
       <ShareModal

@@ -5,19 +5,20 @@ import { useQuery } from "@tanstack/react-query";
 interface BottomNavigationProps {
   activeTab: 'swipe' | 'matches';
   onTabChange: (tab: 'swipe' | 'matches') => void;
+  sessionId?: string;
 }
 
-export default function BottomNavigation({ activeTab, onTabChange }: BottomNavigationProps) {
-  // Get matches count (you'll need to pass sessionId as prop)
+export default function BottomNavigation({ activeTab, onTabChange, sessionId }: BottomNavigationProps) {
+  // Get matches count
   const { data: matches = [] } = useQuery<any[]>({
-    queryKey: ['/api/sessions', 'matches'], // This should include actual sessionId
-    enabled: false, // Disable for now, enable when sessionId is available
+    queryKey: ['/api/sessions', sessionId, 'matches'],
+    enabled: !!sessionId,
   });
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-inset-bottom z-40">
       <div className="max-w-md mx-auto px-4">
-        <div className="flex">
+        <div className="flex h-16">
           <Button
             variant="ghost"
             className={`flex-1 py-4 text-center transition-colors relative ${
