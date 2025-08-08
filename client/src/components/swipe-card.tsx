@@ -53,6 +53,9 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
   };
 
   const handleDragEnd = (event: any, info: PanInfo) => {
+    // Prevent multiple swipes while animating
+    if (isAnimating) return;
+    
     const { offset, velocity } = info;
     const swipeThreshold = 100;
     const velocityThreshold = 300;
@@ -65,6 +68,7 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
         handleSwipe('dislike');
       }
     }
+    // Card will automatically snap back to center if threshold not met
   };
 
   if (currentIndex >= names.length) {
@@ -113,19 +117,21 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
         <motion.div
           className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab"
           style={{ zIndex: 3 }}
-          drag="x"
+          drag={isAnimating ? false : "x"}
           dragConstraints={{ left: -300, right: 300 }}
           dragElastic={0.7}
+          dragSnapToOrigin
           onDragEnd={handleDragEnd}
           whileDrag={{ 
             scale: 1.05,
-            rotate: 5,
             transition: { duration: 0.1 }
           }}
           animate={{
             scale: isAnimating ? 0 : 1,
             opacity: isAnimating ? 0 : 1,
-            transition: { duration: 0.4 }
+            x: isAnimating ? (Math.random() > 0.5 ? 400 : -400) : 0,
+            rotate: isAnimating ? (Math.random() > 0.5 ? 30 : -30) : 0,
+            transition: { duration: 0.4, ease: "easeInOut" }
           }}
         >
           <CardContent name={currentName} />

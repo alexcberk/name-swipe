@@ -155,7 +155,7 @@ export default function Session() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 w-full px-0 py-4 pb-20 overflow-hidden swipe-container flex flex-col">
+      <div className="flex-1 w-full px-0 py-4 pb-24 overflow-hidden swipe-container flex flex-col">
         {activeTab === 'swipe' && (
           <div>
             {/* Session Info */}
