@@ -15,7 +15,6 @@ interface SwipeCardProps {
 
 export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [dragConstraints, setDragConstraints] = useState({ left: 0, right: 0 });
   const isSwipingRef = useRef(false);
   const queryClient = useQueryClient();
@@ -37,7 +36,7 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
   });
 
   const handleSwipe = (action: SwipeActionType) => {
-    if (isAnimating || currentIndex >= names.length || isSwipingRef.current) return;
+    if (currentIndex >= names.length || isSwipingRef.current) return;
     
     isSwipingRef.current = true;
     const currentName = names[currentIndex];
@@ -46,14 +45,19 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
     swipeActionMutation.mutate({ nameId: currentName.id, action });
     onSwipe(currentName.id, action);
     
-    // Immediately move to next card
-    setCurrentIndex(prev => prev + 1);
-    isSwipingRef.current = false;
+    // Move to next card and reset lock after state updates
+    setCurrentIndex(prev => {
+      const newIndex = prev + 1;
+      setTimeout(() => {
+        isSwipingRef.current = false;
+      }, 100);
+      return newIndex;
+    });
   };
 
   const handleDragEnd = (event: any, info: PanInfo) => {
-    // Prevent multiple swipes while animating or already swiping
-    if (isAnimating || isSwipingRef.current) return;
+    // Prevent multiple swipes while already swiping
+    if (isSwipingRef.current) return;
     
     const { offset, velocity } = info;
     const swipeThreshold = 100;
@@ -134,14 +138,14 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
       <div className="flex justify-center space-x-6">
         <Button
           onClick={() => handleSwipe('dislike')}
-          disabled={isAnimating}
+          disabled={isSwipingRef.current}
           className="floating-action w-12 h-12 bg-white rounded-full flex items-center justify-center text-dislike-red hover:bg-red-50 border-2 border-red-100 shadow-lg"
         >
           <X className="h-5 w-5" />
         </Button>
         <Button
           onClick={() => handleSwipe('like')}
-          disabled={isAnimating}
+          disabled={isSwipingRef.current}
           className="floating-action w-12 h-12 bg-white rounded-full flex items-center justify-center text-like-green hover:bg-green-50 border-2 border-green-100 shadow-lg"
         >
           <Heart className="h-5 w-5" />
