@@ -155,12 +155,12 @@ export default function Session() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 w-full px-0 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 64px - 64px)' }}>
+      <div className="flex-1 w-full px-0 py-2 pb-20 overflow-hidden">
         {activeTab === 'swipe' && (
           <div>
             {/* Session Info */}
-            <div className="max-w-sm mx-auto w-full px-4 mb-6">
-              <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="max-w-sm mx-auto w-full px-4 mb-3">
+              <div className="bg-white rounded-lg p-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Session ID</p>

@@ -93,7 +93,7 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
   return (
     <div className="w-full px-4 flex flex-col items-center">
       {/* Card Stack */}
-      <div className="card-stack relative w-full max-w-sm h-96 mb-8">
+      <div className="card-stack relative w-full max-w-sm h-80 mb-4">
         {/* Third card (background) */}
         {thirdName && (
           <motion.div 
@@ -142,20 +142,20 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-center space-x-8">
+      <div className="flex justify-center space-x-6">
         <Button
           onClick={() => handleSwipe('dislike')}
           disabled={isAnimating}
-          className="floating-action w-16 h-16 bg-white rounded-full flex items-center justify-center text-dislike-red hover:bg-red-50 border-2 border-red-100 shadow-lg"
+          className="floating-action w-12 h-12 bg-white rounded-full flex items-center justify-center text-dislike-red hover:bg-red-50 border-2 border-red-100 shadow-lg"
         >
-          <X className="h-6 w-6" />
+          <X className="h-5 w-5" />
         </Button>
         <Button
           onClick={() => handleSwipe('like')}
           disabled={isAnimating}
-          className="floating-action w-16 h-16 bg-white rounded-full flex items-center justify-center text-like-green hover:bg-green-50 border-2 border-green-100 shadow-lg"
+          className="floating-action w-12 h-12 bg-white rounded-full flex items-center justify-center text-like-green hover:bg-green-50 border-2 border-green-100 shadow-lg"
         >
-          <Heart className="h-6 w-6" />
+          <Heart className="h-5 w-5" />
         </Button>
       </div>
     </div>
@@ -173,21 +173,21 @@ function CardContent({ name }: CardContentProps) {
   return (
     <div className="h-full flex flex-col">
       {/* Card Header */}
-      <div className="p-6 text-center flex-1 flex flex-col justify-center">
-        <div className="mb-4">
-          <div className={`w-16 h-16 bg-gradient-to-br ${genderColor} rounded-full mx-auto flex items-center justify-center mb-3`}>
-            <span className="text-white text-2xl font-bold">{genderSymbol}</span>
+      <div className="p-4 text-center flex-1 flex flex-col justify-center">
+        <div className="mb-3">
+          <div className={`w-12 h-12 bg-gradient-to-br ${genderColor} rounded-full mx-auto flex items-center justify-center mb-2`}>
+            <span className="text-white text-lg font-bold">{genderSymbol}</span>
           </div>
         </div>
-        <h2 className="text-4xl font-bold text-gray-800 mb-2">{name.name}</h2>
-        <p className="text-lg text-gray-600 mb-4">{name.origin} origin</p>
-        <p className="text-sm text-gray-500 leading-relaxed">{name.meaning}</p>
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">{name.name}</h2>
+        <p className="text-base text-gray-600 mb-3">{name.origin} origin</p>
+        <p className="text-xs text-gray-500 leading-relaxed px-2">{name.meaning}</p>
       </div>
       
       {/* Card Footer */}
-      <div className="p-4 bg-gray-50 rounded-b-2xl">
+      <div className="p-3 bg-gray-50 rounded-b-2xl">
         <div className="flex justify-between text-xs text-gray-500">
-          <span>Rank #{name.rank} in 2023</span>
+          <span>Rank #{name.rank}</span>
           <span>{name.category}</span>
         </div>
       </div>

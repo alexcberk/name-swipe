@@ -47,35 +47,35 @@ export default function MatchesView({ sessionId, userId }: MatchesViewProps) {
   const renderMatches = (matches: any[], title: string, subtitle: string, icon: any, emptyMessage: string) => {
     if (matches.length === 0) {
       return (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Header */}
-          <div className="bg-gradient-to-r from-tinder-red to-tinder-light rounded-xl p-6 text-white text-center">
+          <div className="bg-gradient-to-r from-tinder-red to-tinder-light rounded-lg p-4 text-white text-center">
             {icon}
-            <h2 className="text-xl font-bold mb-1">{title}</h2>
-            <p className="text-pink-100">{subtitle}</p>
+            <h2 className="text-lg font-bold mb-1">{title}</h2>
+            <p className="text-pink-100 text-sm">{subtitle}</p>
           </div>
 
           {/* Empty State */}
-          <div className="text-center py-12">
-            <HeartCrack className="text-4xl text-gray-300 mb-4 mx-auto" />
-            <h3 className="text-lg font-semibold text-gray-600 mb-2">No matches yet</h3>
-            <p className="text-gray-500">{emptyMessage}</p>
+          <div className="text-center py-8">
+            <HeartCrack className="text-3xl text-gray-300 mb-3 mx-auto" />
+            <h3 className="text-base font-semibold text-gray-600 mb-2">No matches yet</h3>
+            <p className="text-gray-500 text-sm">{emptyMessage}</p>
           </div>
         </div>
       );
     }
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Header */}
-        <div className="bg-gradient-to-r from-tinder-red to-tinder-light rounded-xl p-6 text-white text-center">
+        <div className="bg-gradient-to-r from-tinder-red to-tinder-light rounded-lg p-4 text-white text-center">
           {icon}
-          <h2 className="text-xl font-bold mb-1">{title}</h2>
-          <p className="text-pink-100">{subtitle}</p>
+          <h2 className="text-lg font-bold mb-1">{title}</h2>
+          <p className="text-pink-100 text-sm">{subtitle}</p>
         </div>
 
         {/* Matches Grid */}
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-3">
           {matches.map((match: any) => {
             const name = match.name;
             if (!name) return null;
@@ -85,15 +85,15 @@ export default function MatchesView({ sessionId, userId }: MatchesViewProps) {
 
             return (
               <Card key={match.nameId || match.id} className="border border-gray-100 shadow-sm">
-                <CardContent className="p-4">
+                <CardContent className="p-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className={`w-12 h-12 bg-gradient-to-br ${genderColor} rounded-full flex items-center justify-center`}>
-                        <span className="text-white font-bold">{genderSymbol}</span>
+                      <div className={`w-10 h-10 bg-gradient-to-br ${genderColor} rounded-full flex items-center justify-center`}>
+                        <span className="text-white font-bold text-sm">{genderSymbol}</span>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-800">{name.name}</h3>
-                        <p className="text-sm text-gray-500">{name.origin} origin</p>
+                        <h3 className="font-semibold text-gray-800 text-sm">{name.name}</h3>
+                        <p className="text-xs text-gray-500">{name.origin} origin</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -125,7 +125,7 @@ export default function MatchesView({ sessionId, userId }: MatchesViewProps) {
   };
 
   return (
-    <div className="w-full px-4 space-y-4">
+    <div className="w-full px-4 space-y-2">
       <Tabs defaultValue="shared" className="w-full max-w-sm mx-auto">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="shared" className="flex items-center gap-2">
