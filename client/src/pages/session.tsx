@@ -155,28 +155,30 @@ export default function Session() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 max-w-md mx-auto px-4 py-4 pb-20 overflow-y-auto swipe-container flex flex-col">
+      <div className="flex-1 w-full px-0 py-4 pb-20 overflow-hidden swipe-container flex flex-col">
         {activeTab === 'swipe' && (
           <div>
             {/* Session Info */}
-            <div className="bg-white rounded-xl p-4 mb-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Session ID</p>
-                  <p className="font-semibold text-gray-800">#{sessionId?.slice(-6).toUpperCase()}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Partner status</p>
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    partnerConnected 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                      partnerConnected ? 'bg-green-400' : 'bg-gray-400'
-                    }`}></span>
-                    {partnerConnected ? 'Connected' : 'Waiting'}
-                  </span>
+            <div className="max-w-sm mx-auto w-full px-4 mb-6">
+              <div className="bg-white rounded-xl p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Session ID</p>
+                    <p className="font-semibold text-gray-800">#{sessionId?.slice(-6).toUpperCase()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-600">Partner status</p>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      partnerConnected 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                        partnerConnected ? 'bg-green-400' : 'bg-gray-400'
+                      }`}></span>
+                      {partnerConnected ? 'Connected' : 'Waiting'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

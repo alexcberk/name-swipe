@@ -3,7 +3,7 @@ import { Heart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useSwipe } from "@/hooks/use-swipe";
+import { motion, PanInfo } from "framer-motion";
 import type { BabyName, SwipeActionType } from "@shared/schema";
 
 interface SwipeCardProps {
@@ -16,7 +16,7 @@ interface SwipeCardProps {
 export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const [dragConstraints, setDragConstraints] = useState({ left: 0, right: 0 });
   const queryClient = useQueryClient();
 
   const swipeActionMutation = useMutation({
@@ -41,12 +41,6 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
     const currentName = names[currentIndex];
     setIsAnimating(true);
     
-    // Add animation class
-    const card = cardRef.current;
-    if (card) {
-      card.classList.add(action === 'like' ? 'swipe-right' : 'swipe-left');
-    }
-    
     // Record swipe action
     swipeActionMutation.mutate({ nameId: currentName.id, action });
     onSwipe(currentName.id, action);
@@ -55,24 +49,23 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
     setTimeout(() => {
       setCurrentIndex(prev => prev + 1);
       setIsAnimating(false);
-      if (card) {
-        card.classList.remove('swipe-right', 'swipe-left');
-      }
     }, 400);
   };
 
-  const { 
-    handleMouseDown, 
-    handleMouseMove, 
-    handleMouseUp, 
-    handleTouchStart, 
-    handleTouchMove, 
-    handleTouchEnd 
-  } = useSwipe({
-    onSwipeLeft: () => handleSwipe('dislike'),
-    onSwipeRight: () => handleSwipe('like'),
-    threshold: 100,
-  });
+  const handleDragEnd = (event: any, info: PanInfo) => {
+    const { offset, velocity } = info;
+    const swipeThreshold = 100;
+    const velocityThreshold = 300;
+    
+    // Check if user swiped far enough or fast enough
+    if (Math.abs(offset.x) > swipeThreshold || Math.abs(velocity.x) > velocityThreshold) {
+      if (offset.x > 0) {
+        handleSwipe('like');
+      } else {
+        handleSwipe('dislike');
+      }
+    }
+  };
 
   if (currentIndex >= names.length) {
     return (
@@ -91,37 +84,52 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
   const thirdName = names[currentIndex + 2];
 
   return (
-    <div className="relative">
+    <div className="w-full px-4 flex flex-col items-center">
       {/* Card Stack */}
-      <div className="card-stack relative h-96 mb-8">
+      <div className="card-stack relative w-full max-w-sm h-96 mb-8">
         {/* Third card (background) */}
         {thirdName && (
-          <div className="absolute inset-0 bg-white rounded-2xl shadow-md border-2 border-gray-100 transform scale-90 translate-y-5" style={{ zIndex: 1 }}>
+          <motion.div 
+            className="absolute inset-0 bg-white rounded-2xl shadow-md border-2 border-gray-100"
+            style={{ zIndex: 1 }}
+            animate={{ scale: 0.9, y: 20 }}
+          >
             <CardContent name={thirdName} />
-          </div>
+          </motion.div>
         )}
         
         {/* Second card (middle) */}
         {nextName && (
-          <div className="absolute inset-0 bg-white rounded-2xl shadow-lg border-2 border-gray-100 transform scale-95 translate-y-2.5" style={{ zIndex: 2 }}>
+          <motion.div 
+            className="absolute inset-0 bg-white rounded-2xl shadow-lg border-2 border-gray-100"
+            style={{ zIndex: 2 }}
+            animate={{ scale: 0.95, y: 10 }}
+          >
             <CardContent name={nextName} />
-          </div>
+          </motion.div>
         )}
         
         {/* First card (top) */}
-        <div 
-          ref={cardRef}
-          className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab active:cursor-grabbing transition-transform duration-200 ease-out"
+        <motion.div
+          className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab"
           style={{ zIndex: 3 }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          drag="x"
+          dragConstraints={{ left: -300, right: 300 }}
+          dragElastic={0.7}
+          onDragEnd={handleDragEnd}
+          whileDrag={{ 
+            scale: 1.05,
+            rotate: 5,
+            transition: { duration: 0.1 }
+          }}
+          animate={{
+            scale: isAnimating ? 0 : 1,
+            opacity: isAnimating ? 0 : 1,
+            transition: { duration: 0.4 }
+          }}
         >
           <CardContent name={currentName} />
-        </div>
+        </motion.div>
       </div>
 
       {/* Action Buttons */}

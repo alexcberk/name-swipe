@@ -114,8 +114,8 @@ export default function MatchesView({ sessionId, userId }: MatchesViewProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="shared" className="w-full">
+    <div className="w-full px-4 space-y-4">
+      <Tabs defaultValue="shared" className="w-full max-w-sm mx-auto">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="shared" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
