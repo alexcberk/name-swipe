@@ -17,6 +17,7 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [dragConstraints, setDragConstraints] = useState({ left: 0, right: 0 });
+  const isSwipingRef = useRef(false);
   const queryClient = useQueryClient();
 
   const swipeActionMutation = useMutation({
@@ -36,8 +37,9 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
   });
 
   const handleSwipe = (action: SwipeActionType) => {
-    if (isAnimating || currentIndex >= names.length) return;
+    if (isAnimating || currentIndex >= names.length || isSwipingRef.current) return;
     
+    isSwipingRef.current = true;
     const currentName = names[currentIndex];
     setIsAnimating(true);
     
@@ -49,12 +51,13 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
     setTimeout(() => {
       setCurrentIndex(prev => prev + 1);
       setIsAnimating(false);
+      isSwipingRef.current = false;
     }, 400);
   };
 
   const handleDragEnd = (event: any, info: PanInfo) => {
-    // Prevent multiple swipes while animating
-    if (isAnimating) return;
+    // Prevent multiple swipes while animating or already swiping
+    if (isAnimating || isSwipingRef.current) return;
     
     const { offset, velocity } = info;
     const swipeThreshold = 100;
@@ -117,7 +120,7 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
         <motion.div
           className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab"
           style={{ zIndex: 3 }}
-          drag={isAnimating ? false : "x"}
+          drag={isAnimating || isSwipingRef.current ? false : "x"}
           dragConstraints={{ left: -300, right: 300 }}
           dragElastic={0.7}
           dragSnapToOrigin

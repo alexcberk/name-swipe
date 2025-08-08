@@ -100,7 +100,7 @@ export default function Session() {
   }
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-pink-50 to-purple-50 flex flex-col overflow-hidden">
+    <div className="h-screen w-screen bg-gradient-to-br from-pink-50 to-purple-50 flex flex-col overflow-hidden max-h-screen">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
@@ -155,7 +155,7 @@ export default function Session() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 w-full px-0 py-4 pb-24 overflow-hidden swipe-container flex flex-col">
+      <div className="flex-1 w-full px-0 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 64px - 64px)' }}>
         {activeTab === 'swipe' && (
           <div>
             {/* Session Info */}

@@ -2,6 +2,7 @@ import { Heart, HeartCrack, Users, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { babyNamesDatabase } from "@/lib/baby-names";
 
 interface MatchesViewProps {
   sessionId: string;
@@ -21,7 +22,17 @@ export default function MatchesView({ sessionId, userId }: MatchesViewProps) {
     enabled: !!sessionId && !!userId,
   });
   
-  const userLikes = userSwipes.filter((swipe: any) => swipe.action === 'like');
+  // Enrich user likes with baby name data
+  const userLikes = userSwipes
+    .filter((swipe: any) => swipe.action === 'like')
+    .map((swipe: any) => {
+      const babyName = babyNamesDatabase.find(name => name.id === swipe.nameId);
+      return {
+        ...swipe,
+        name: babyName
+      };
+    })
+    .filter((swipe: any) => swipe.name); // Only include swipes where we found the name
   const isLoading = sharedLoading || userLoading;
 
   if (isLoading) {
@@ -139,7 +150,7 @@ export default function MatchesView({ sessionId, userId }: MatchesViewProps) {
         
         <TabsContent value="yours">
           {renderMatches(
-            userLikes.map((like: any) => ({ ...like, name: like.name })),
+            userLikes,
             "Your Favorites",
             "Names you've liked",
             <User className="text-3xl mb-2 mx-auto" />,
