@@ -41,18 +41,14 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
     
     isSwipingRef.current = true;
     const currentName = names[currentIndex];
-    setIsAnimating(true);
     
     // Record swipe action
     swipeActionMutation.mutate({ nameId: currentName.id, action });
     onSwipe(currentName.id, action);
     
-    // Remove card after animation
-    setTimeout(() => {
-      setCurrentIndex(prev => prev + 1);
-      setIsAnimating(false);
-      isSwipingRef.current = false;
-    }, 400);
+    // Immediately move to next card
+    setCurrentIndex(prev => prev + 1);
+    isSwipingRef.current = false;
   };
 
   const handleDragEnd = (event: any, info: PanInfo) => {
@@ -120,7 +116,7 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
         <motion.div
           className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab"
           style={{ zIndex: 3 }}
-          drag={isAnimating || isSwipingRef.current ? false : "x"}
+          drag={isSwipingRef.current ? false : "x"}
           dragConstraints={{ left: -300, right: 300 }}
           dragElastic={0.7}
           dragSnapToOrigin
@@ -128,13 +124,6 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
           whileDrag={{ 
             scale: 1.05,
             transition: { duration: 0.1 }
-          }}
-          animate={{
-            scale: isAnimating ? 0 : 1,
-            opacity: isAnimating ? 0 : 1,
-            x: isAnimating ? (Math.random() > 0.5 ? 400 : -400) : 0,
-            rotate: isAnimating ? (Math.random() > 0.5 ? 30 : -30) : 0,
-            transition: { duration: 0.4, ease: "easeInOut" }
           }}
         >
           <CardContent name={currentName} />
