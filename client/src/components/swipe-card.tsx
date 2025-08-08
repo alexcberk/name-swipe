@@ -15,7 +15,8 @@ interface SwipeCardProps {
 
 export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [dragConstraints, setDragConstraints] = useState({ left: 0, right: 0 });
+  const [isSwipingAway, setIsSwipingAway] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const isSwipingRef = useRef(false);
   const queryClient = useQueryClient();
 
@@ -36,28 +37,31 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
   });
 
   const handleSwipe = (action: SwipeActionType) => {
-    if (currentIndex >= names.length || isSwipingRef.current) return;
+    if (currentIndex >= names.length || isSwipingRef.current || isSwipingAway) return;
     
     isSwipingRef.current = true;
     const currentName = names[currentIndex];
+    
+    // Set swipe animation
+    setIsSwipingAway(true);
+    setSwipeDirection(action === 'like' ? 'right' : 'left');
     
     // Record swipe action
     swipeActionMutation.mutate({ nameId: currentName.id, action });
     onSwipe(currentName.id, action);
     
-    // Move to next card and reset lock after state updates
-    setCurrentIndex(prev => {
-      const newIndex = prev + 1;
-      setTimeout(() => {
-        isSwipingRef.current = false;
-      }, 100);
-      return newIndex;
-    });
+    // Move to next card after animation
+    setTimeout(() => {
+      setCurrentIndex(prev => prev + 1);
+      setIsSwipingAway(false);
+      setSwipeDirection(null);
+      isSwipingRef.current = false;
+    }, 300);
   };
 
   const handleDragEnd = (event: any, info: PanInfo) => {
     // Prevent multiple swipes while already swiping
-    if (isSwipingRef.current) return;
+    if (isSwipingRef.current || isSwipingAway) return;
     
     const { offset, velocity } = info;
     const swipeThreshold = 100;
@@ -71,7 +75,7 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
         handleSwipe('dislike');
       }
     }
-    // Card will automatically snap back to center if threshold not met
+    // If not swiped far enough, card will return to center automatically
   };
 
   if (currentIndex >= names.length) {
@@ -120,14 +124,19 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
         <motion.div
           className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab"
           style={{ zIndex: 3 }}
-          drag={isSwipingRef.current ? false : "x"}
-          dragConstraints={{ left: -300, right: 300 }}
-          dragElastic={0.7}
-          dragSnapToOrigin
+          drag={isSwipingRef.current || isSwipingAway ? false : "x"}
+          dragConstraints={{ left: -200, right: 200 }}
+          dragElastic={0.2}
           onDragEnd={handleDragEnd}
           whileDrag={{ 
             scale: 1.05,
             transition: { duration: 0.1 }
+          }}
+          animate={{
+            x: isSwipingAway ? (swipeDirection === 'right' ? 400 : -400) : 0,
+            rotate: isSwipingAway ? (swipeDirection === 'right' ? 30 : -30) : 0,
+            opacity: isSwipingAway ? 0 : 1,
+            transition: { duration: 0.3, ease: "easeOut" }
           }}
         >
           <CardContent name={currentName} />
@@ -138,14 +147,14 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
       <div className="flex justify-center space-x-6">
         <Button
           onClick={() => handleSwipe('dislike')}
-          disabled={isSwipingRef.current}
+          disabled={isSwipingRef.current || isSwipingAway}
           className="floating-action w-12 h-12 bg-white rounded-full flex items-center justify-center text-dislike-red hover:bg-red-50 border-2 border-red-100 shadow-lg"
         >
           <X className="h-5 w-5" />
         </Button>
         <Button
           onClick={() => handleSwipe('like')}
-          disabled={isSwipingRef.current}
+          disabled={isSwipingRef.current || isSwipingAway}
           className="floating-action w-12 h-12 bg-white rounded-full flex items-center justify-center text-like-green hover:bg-green-50 border-2 border-green-100 shadow-lg"
         >
           <Heart className="h-5 w-5" />
