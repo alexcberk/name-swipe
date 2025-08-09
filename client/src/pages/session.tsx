@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams } from "wouter";
+import React, { useState } from "react";
+import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Baby, Share2 } from "lucide-react";
 import SwipeCard from "@/components/swipe-card";
@@ -36,6 +36,7 @@ export default function Session() {
           toast({
             title: "Partner Connected",
             description: "Your partner has joined the session!",
+            duration: 2000,
           });
           break;
         case 'partner_disconnected':
@@ -43,12 +44,14 @@ export default function Session() {
           toast({
             title: "Partner Disconnected",
             description: "Your partner has left the session.",
+            duration: 2000,
           });
           break;
         case 'new_match':
           toast({
             title: "New Match! ❤️",
             description: "You both liked this name!",
+            duration: 1500,
           });
           break;
       }
@@ -72,10 +75,46 @@ export default function Session() {
     enabled: !!sessionId,
   });
 
-  // Filter out already swiped names
-  const availableNames = babyNames.filter(name => 
-    !userSwipes.some((swipe: any) => swipe.nameId === name.id)
-  );
+  const availableNames = React.useMemo(() => {
+    if (genderFilter === 'all') {
+      // Create alternating pattern FIRST, then filter swiped names
+      const boyNames = babyNames.filter(name => name.gender === 'boy');
+      const girlNames = babyNames.filter(name => name.gender === 'girl');
+      
+      // Sort by rank to ensure consistent ordering
+      boyNames.sort((a, b) => (a.rank || 999) - (b.rank || 999));
+      girlNames.sort((a, b) => (a.rank || 999) - (b.rank || 999));
+      
+      const alternatingNames = [];
+      
+      // True alternating pattern: boy, girl, boy, girl...
+      let boyIndex = 0;
+      let girlIndex = 0;
+      
+      while (boyIndex < boyNames.length || girlIndex < girlNames.length) {
+        // Add boy if available
+        if (boyIndex < boyNames.length) {
+          alternatingNames.push(boyNames[boyIndex]);
+          boyIndex++;
+        }
+        // Add girl if available
+        if (girlIndex < girlNames.length) {
+          alternatingNames.push(girlNames[girlIndex]);
+          girlIndex++;
+        }
+      }
+      
+      // Now filter out swiped names while maintaining order
+      return alternatingNames.filter(name => 
+        !userSwipes.some((swipe: any) => swipe.nameId === name.id)
+      );
+    }
+    
+    // For boy/girl specific filters, filter swiped names
+    return babyNames.filter(name => 
+      !userSwipes.some((swipe: any) => swipe.nameId === name.id)
+    );
+  }, [babyNames, genderFilter, userSwipes]);
 
   if (sessionLoading || namesLoading) {
     return (
@@ -104,10 +143,10 @@ export default function Session() {
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
             <Baby className="text-tinder-red text-xl" />
             <h1 className="text-xl font-bold text-gray-800">BabySwipe</h1>
-          </div>
+          </Link>
           <div className="flex items-center space-x-3">
             {/* Gender Filter Toggle */}
             <div className="flex bg-gray-100 rounded-full p-1">
@@ -155,9 +194,9 @@ export default function Session() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 w-full px-0 py-2 pb-20 overflow-hidden">
+      <div className="flex-1 w-full px-0 py-2 pb-20 flex flex-col">
         {activeTab === 'swipe' && (
-          <div>
+          <div className="flex-1 overflow-hidden">
             {/* Session Info */}
             <div className="max-w-sm mx-auto w-full px-4 mb-3">
               <div className="bg-white rounded-lg p-3 shadow-sm">
@@ -199,7 +238,9 @@ export default function Session() {
         )}
 
         {activeTab === 'matches' && (
-          <MatchesView sessionId={sessionId!} userId={userId} />
+          <div className="flex-1 overflow-y-auto">
+            <MatchesView sessionId={sessionId!} userId={userId} />
+          </div>
         )}
       </div>
 

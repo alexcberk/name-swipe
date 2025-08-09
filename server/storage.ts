@@ -57,14 +57,29 @@ export class MemStorage implements IStorage {
   }
 
   async createSwipeAction(insertAction: InsertSwipeAction): Promise<SwipeAction> {
-    const id = randomUUID();
-    const action: SwipeAction = {
-      id,
-      ...insertAction,
-      createdAt: new Date(),
-    };
-    this.swipeActions.set(id, action);
-    return action;
+    // Check if there's already a swipe for this user + name combination
+    const existingAction = Array.from(this.swipeActions.values()).find(
+      action => action.userId === insertAction.userId && 
+                action.nameId === insertAction.nameId &&
+                action.sessionId === insertAction.sessionId
+    );
+    
+    if (existingAction) {
+      // Update existing action
+      existingAction.action = insertAction.action;
+      existingAction.createdAt = new Date();
+      return existingAction;
+    } else {
+      // Create new action
+      const id = randomUUID();
+      const action: SwipeAction = {
+        id,
+        ...insertAction,
+        createdAt: new Date(),
+      };
+      this.swipeActions.set(id, action);
+      return action;
+    }
   }
 
   async getSwipeActionsBySession(sessionId: string): Promise<SwipeAction[]> {

@@ -1,0 +1,617 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabySwipe - Find Your Perfect Baby Name Together</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'tinder-red': '#FF4458',
+                        'tinder-light': '#FD5068',
+                        'like-green': '#42DDA6',
+                        'dislike-red': '#FF6B6B',
+                        'boy-blue': '#4A90E2',
+                        'girl-pink': '#E91E63'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @keyframes swipeRight {
+            to {
+                transform: translateX(100vw) rotate(30deg);
+                opacity: 0;
+            }
+        }
+        @keyframes swipeLeft {
+            to {
+                transform: translateX(-100vw) rotate(-30deg);
+                opacity: 0;
+            }
+        }
+        .swipe-right {
+            animation: swipeRight 0.3s ease-out forwards;
+        }
+        .swipe-left {
+            animation: swipeLeft 0.3s ease-out forwards;
+        }
+        .card-stack {
+            perspective: 1000px;
+        }
+        .card:nth-child(2) {
+            transform: scale(0.95) translateY(10px);
+            z-index: 1;
+        }
+        .card:nth-child(3) {
+            transform: scale(0.9) translateY(20px);
+            z-index: 0;
+        }
+        .floating-action {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+        }
+        .floating-action:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- @COMPONENT: App [main application container] -->
+    <div class="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
+        
+        <!-- Header -->
+        <!-- @COMPONENT: Header [navigation and settings] -->
+        <header class="bg-white shadow-sm sticky top-0 z-50">
+            <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-baby text-tinder-red text-xl"></i>
+                    <h1 class="text-xl font-bold text-gray-800">BabySwipe</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <!-- Gender Filter Toggle -->
+                    <div class="flex bg-gray-100 rounded-full p-1">
+                        <button id="genderAll" class="px-3 py-1 rounded-full text-sm font-medium transition-all bg-tinder-red text-white" data-gender="all">
+                            All
+                        </button>
+                        <button id="genderBoy" class="px-3 py-1 rounded-full text-sm font-medium transition-all text-gray-600 hover:bg-boy-blue hover:text-white" data-gender="boy">
+                            <i class="fas fa-mars"></i>
+                        </button>
+                        <button id="genderGirl" class="px-3 py-1 rounded-full text-sm font-medium transition-all text-gray-600 hover:bg-girl-pink hover:text-white" data-gender="girl">
+                            <i class="fas fa-venus"></i>
+                        </button>
+                    </div>
+                    <button id="shareBtn" class="p-2 text-gray-600 hover:text-tinder-red transition-colors">
+                        <i class="fas fa-share-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+        <!-- @END_COMPONENT: Header -->
+
+        <!-- Main Content Area -->
+        <div class="max-w-md mx-auto px-4 py-6">
+            
+            <!-- Tab Content -->
+            <div id="swipeTab" class="tab-content">
+                <!-- @COMPONENT: SwipeInterface [main swiping cards] -->
+                <div class="relative">
+                    <!-- Session Info -->
+                    <div class="bg-white rounded-xl p-4 mb-6 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Swiping session</p>
+                                <p class="font-semibold text-gray-800" data-bind="session.id">#ABC123</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">Partner status</p>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></span>
+                                    Connected
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Stack -->
+                    <div class="card-stack relative h-96 mb-8">
+                        <!-- Card 1 (Top) -->
+                        <!-- @MAP: nameCards.map(card => ( -->
+                        <div class="card absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab active:cursor-grabbing" style="z-index: 3;" data-name="Emma">
+                            <div class="h-full flex flex-col">
+                                <!-- Card Header -->
+                                <div class="p-6 text-center flex-1 flex flex-col justify-center">
+                                    <div class="mb-4">
+                                        <div class="w-16 h-16 bg-gradient-to-br from-girl-pink to-pink-400 rounded-full mx-auto flex items-center justify-center mb-3">
+                                            <i class="fas fa-venus text-white text-2xl"></i>
+                                        </div>
+                                    </div>
+                                    <h2 class="text-4xl font-bold text-gray-800 mb-2" data-bind="card.name">Emma</h2>
+                                    <p class="text-lg text-gray-600 mb-4" data-bind="card.origin">Germanic origin</p>
+                                    <p class="text-sm text-gray-500 leading-relaxed" data-bind="card.meaning">"Whole" or "universal". A classic name that has remained popular for centuries.</p>
+                                </div>
+                                
+                                <!-- Card Footer -->
+                                <div class="p-4 bg-gray-50 rounded-b-2xl">
+                                    <div class="flex justify-between text-xs text-gray-500">
+                                        <span data-bind="card.popularity">Rank #2 in 2023</span>
+                                        <span data-bind="card.category">Traditional</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2 (Behind) -->
+                        <div class="card absolute inset-0 bg-white rounded-2xl shadow-lg border-2 border-gray-100" style="z-index: 2;" data-name="Liam">
+                            <div class="h-full flex flex-col">
+                                <div class="p-6 text-center flex-1 flex flex-col justify-center">
+                                    <div class="mb-4">
+                                        <div class="w-16 h-16 bg-gradient-to-br from-boy-blue to-blue-400 rounded-full mx-auto flex items-center justify-center mb-3">
+                                            <i class="fas fa-mars text-white text-2xl"></i>
+                                        </div>
+                                    </div>
+                                    <h2 class="text-4xl font-bold text-gray-800 mb-2">Liam</h2>
+                                    <p class="text-lg text-gray-600 mb-4">Irish origin</p>
+                                    <p class="text-sm text-gray-500 leading-relaxed">"Strong-willed warrior and protector". Modern and strong name.</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 rounded-b-2xl">
+                                    <div class="flex justify-between text-xs text-gray-500">
+                                        <span>Rank #1 in 2023</span>
+                                        <span>Modern</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3 (Background) -->
+                        <div class="card absolute inset-0 bg-white rounded-2xl shadow-md border-2 border-gray-100" style="z-index: 1;" data-name="Sophia">
+                            <div class="h-full flex flex-col">
+                                <div class="p-6 text-center flex-1 flex flex-col justify-center">
+                                    <div class="mb-4">
+                                        <div class="w-16 h-16 bg-gradient-to-br from-girl-pink to-pink-400 rounded-full mx-auto flex items-center justify-center mb-3">
+                                            <i class="fas fa-venus text-white text-2xl"></i>
+                                        </div>
+                                    </div>
+                                    <h2 class="text-4xl font-bold text-gray-800 mb-2">Sophia</h2>
+                                    <p class="text-lg text-gray-600 mb-4">Greek origin</p>
+                                    <p class="text-sm text-gray-500 leading-relaxed">"Wisdom". Elegant and timeless name with classical roots.</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 rounded-b-2xl">
+                                    <div class="flex justify-between text-xs text-gray-500">
+                                        <span>Rank #5 in 2023</span>
+                                        <span>Classic</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-center space-x-8">
+                        <button id="dislikeBtn" class="floating-action w-16 h-16 bg-white rounded-full flex items-center justify-center text-dislike-red hover:bg-red-50 border-2 border-red-100" data-event="click:handleDislike">
+                            <i class="fas fa-times text-2xl"></i>
+                        </button>
+                        <button id="likeBtn" class="floating-action w-16 h-16 bg-white rounded-full flex items-center justify-center text-like-green hover:bg-green-50 border-2 border-green-100" data-event="click:handleLike">
+                            <i class="fas fa-heart text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: SwipeInterface -->
+            </div>
+
+            <!-- Matches Tab -->
+            <div id="matchesTab" class="tab-content hidden">
+                <!-- @COMPONENT: MatchesView [shared liked names] -->
+                <div class="space-y-4">
+                    <!-- Matches Header -->
+                    <div class="bg-gradient-to-r from-tinder-red to-tinder-light rounded-xl p-6 text-white text-center">
+                        <i class="fas fa-heart text-3xl mb-2"></i>
+                        <h2 class="text-xl font-bold mb-1">Your Matches</h2>
+                        <p class="text-pink-100">Names you both loved</p>
+                    </div>
+
+                    <!-- Matches Grid -->
+                    <div class="grid grid-cols-1 gap-4" data-mock="true">
+                        <!-- @MAP: matches.map(match => ( -->
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-tinder-red to-pink-400 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-heart text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800" data-bind="match.name">Oliver</h3>
+                                        <p class="text-sm text-gray-500" data-bind="match.origin">Latin origin</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="flex -space-x-1">
+                                        <div class="w-6 h-6 bg-like-green rounded-full border-2 border-white flex items-center justify-center">
+                                            <i class="fas fa-heart text-white text-xs"></i>
+                                        </div>
+                                        <div class="w-6 h-6 bg-like-green rounded-full border-2 border-white flex items-center justify-center">
+                                            <i class="fas fa-heart text-white text-xs"></i>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">Both liked</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-girl-pink to-pink-400 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-venus text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800">Ava</h3>
+                                        <p class="text-sm text-gray-500">Latin origin</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="flex -space-x-1">
+                                        <div class="w-6 h-6 bg-like-green rounded-full border-2 border-white flex items-center justify-center">
+                                            <i class="fas fa-heart text-white text-xs"></i>
+                                        </div>
+                                        <div class="w-6 h-6 bg-like-green rounded-full border-2 border-white flex items-center justify-center">
+                                            <i class="fas fa-heart text-white text-xs"></i>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">Both liked</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-boy-blue to-blue-400 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-mars text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800">Noah</h3>
+                                        <p class="text-sm text-gray-500">Hebrew origin</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="flex -space-x-1">
+                                        <div class="w-6 h-6 bg-like-green rounded-full border-2 border-white flex items-center justify-center">
+                                            <i class="fas fa-heart text-white text-xs"></i>
+                                        </div>
+                                        <div class="w-6 h-6 bg-like-green rounded-full border-2 border-white flex items-center justify-center">
+                                            <i class="fas fa-heart text-white text-xs"></i>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">Both liked</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+
+                    <!-- Empty State (when no matches) -->
+                    <div class="text-center py-12 hidden" id="emptyMatches">
+                        <i class="fas fa-heart-broken text-4xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No matches yet</h3>
+                        <p class="text-gray-500">Keep swiping to find names you both love!</p>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: MatchesView -->
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <!-- @COMPONENT: BottomNavigation [tab switching] -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+            <div class="max-w-md mx-auto px-4">
+                <div class="flex">
+                    <button class="nav-tab flex-1 py-4 text-center transition-colors text-tinder-red border-t-2 border-tinder-red" data-tab="swipe">
+                        <i class="fas fa-cards text-xl mb-1 block"></i>
+                        <span class="text-xs font-medium">Swipe</span>
+                    </button>
+                    <button class="nav-tab flex-1 py-4 text-center transition-colors text-gray-400 hover:text-gray-600" data-tab="matches" data-implementation="Switch to matches view">
+                        <i class="fas fa-heart text-xl mb-1 block"></i>
+                        <span class="text-xs font-medium">Matches</span>
+                        <span class="absolute top-2 right-6 w-5 h-5 bg-tinder-red text-white text-xs rounded-full flex items-center justify-center" data-bind="matches.count">3</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <!-- @END_COMPONENT: BottomNavigation -->
+
+        <!-- Share Modal -->
+        <!-- @COMPONENT: ShareModal [link sharing overlay] -->
+        <div id="shareModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-sm">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-gradient-to-br from-tinder-red to-pink-400 rounded-full mx-auto flex items-center justify-center mb-4">
+                        <i class="fas fa-share-alt text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Share with Your Partner</h3>
+                    <p class="text-gray-600">Send this link to swipe on names together</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="text-sm font-medium text-gray-700 block mb-2">Your session link:</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" value="https://babyswipe.app/session/abc123" class="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm" readonly data-bind="session.shareUrl">
+                            <button class="px-3 py-2 bg-tinder-red text-white rounded-lg text-sm font-medium hover:bg-tinder-light transition-colors" data-event="click:copyLink">
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button class="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors" data-event="click:shareWhatsApp">
+                            <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                        </button>
+                        <button class="flex-1 bg-blue-400 text-white py-3 rounded-lg font-medium hover:bg-blue-500 transition-colors" data-event="click:shareText">
+                            <i class="fas fa-sms mr-2"></i>Text
+                        </button>
+                    </div>
+                </div>
+                
+                <button id="closeModal" class="w-full mt-6 py-3 text-gray-600 font-medium" data-event="click:closeModal">
+                    Cancel
+                </button>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: ShareModal -->
+    </div>
+    <!-- @END_COMPONENT: App -->
+
+    <script>
+        // TODO: Implement business logic, API calls, or state management
+        (function() {
+            'use strict';
+            
+            // Mock data
+            const nameDatabase = [
+                { name: 'Emma', gender: 'girl', origin: 'Germanic', meaning: '"Whole" or "universal". A classic name that has remained popular for centuries.', rank: 2, category: 'Traditional' },
+                { name: 'Liam', gender: 'boy', origin: 'Irish', meaning: '"Strong-willed warrior and protector". Modern and strong name.', rank: 1, category: 'Modern' },
+                { name: 'Sophia', gender: 'girl', origin: 'Greek', meaning: '"Wisdom". Elegant and timeless name with classical roots.', rank: 5, category: 'Classic' },
+                { name: 'Noah', gender: 'boy', origin: 'Hebrew', meaning: '"Rest" or "comfort". Biblical name with peaceful meaning.', rank: 3, category: 'Traditional' },
+                { name: 'Oliver', gender: 'boy', origin: 'Latin', meaning: '"Olive tree". Symbol of peace and fruitfulness.', rank: 4, category: 'Classic' }
+            ];
+
+            // State management
+            let currentCardIndex = 0;
+            let currentGenderFilter = 'all';
+            let activeTab = 'swipe';
+            
+            // DOM elements
+            const genderButtons = document.querySelectorAll('[data-gender]');
+            const shareBtn = document.getElementById('shareBtn');
+            const shareModal = document.getElementById('shareModal');
+            const closeModal = document.getElementById('closeModal');
+            const likeBtn = document.getElementById('likeBtn');
+            const dislikeBtn = document.getElementById('dislikeBtn');
+            const navTabs = document.querySelectorAll('.nav-tab');
+            const swipeTab = document.getElementById('swipeTab');
+            const matchesTab = document.getElementById('matchesTab');
+
+            // Gender filter functionality
+            genderButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active state
+                    genderButtons.forEach(btn => {
+                        btn.classList.remove('bg-tinder-red', 'text-white', 'bg-boy-blue', 'bg-girl-pink');
+                        btn.classList.add('text-gray-600');
+                    });
+                    
+                    const gender = this.dataset.gender;
+                    if (gender === 'all') {
+                        this.classList.add('bg-tinder-red', 'text-white');
+                    } else if (gender === 'boy') {
+                        this.classList.add('bg-boy-blue', 'text-white');
+                    } else if (gender === 'girl') {
+                        this.classList.add('bg-girl-pink', 'text-white');
+                    }
+                    this.classList.remove('text-gray-600');
+                    
+                    currentGenderFilter = gender;
+                    // TODO: Filter cards based on gender
+                });
+            });
+
+            // Share modal functionality
+            shareBtn.addEventListener('click', function() {
+                shareModal.classList.remove('hidden');
+            });
+
+            closeModal.addEventListener('click', function() {
+                shareModal.classList.add('hidden');
+            });
+
+            shareModal.addEventListener('click', function(e) {
+                if (e.target === shareModal) {
+                    shareModal.classList.add('hidden');
+                }
+            });
+
+            // Tab navigation
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.dataset.tab;
+                    
+                    // Update active tab styling
+                    navTabs.forEach(t => {
+                        t.classList.remove('text-tinder-red', 'border-t-2', 'border-tinder-red');
+                        t.classList.add('text-gray-400');
+                    });
+                    this.classList.add('text-tinder-red', 'border-t-2', 'border-tinder-red');
+                    this.classList.remove('text-gray-400');
+                    
+                    // Show/hide tab content
+                    if (targetTab === 'swipe') {
+                        swipeTab.classList.remove('hidden');
+                        matchesTab.classList.add('hidden');
+                    } else if (targetTab === 'matches') {
+                        swipeTab.classList.add('hidden');
+                        matchesTab.classList.remove('hidden');
+                    }
+                    
+                    activeTab = targetTab;
+                });
+            });
+
+            // Card swiping functionality
+            function swipeCard(direction) {
+                const topCard = document.querySelector('.card[style*="z-index: 3"]');
+                if (!topCard) return;
+                
+                // Add swipe animation
+                if (direction === 'right') {
+                    topCard.classList.add('swipe-right');
+                    // TODO: Add to likes
+                } else {
+                    topCard.classList.add('swipe-left');
+                    // TODO: Add to dislikes
+                }
+                
+                // Remove card after animation
+                setTimeout(() => {
+                    topCard.remove();
+                    // TODO: Load next card from deck
+                    updateCardStack();
+                }, 300);
+            }
+
+            function updateCardStack() {
+                const cards = document.querySelectorAll('.card');
+                cards.forEach((card, index) => {
+                    if (index === 0) {
+                        card.style.zIndex = '3';
+                        card.style.transform = 'scale(1) translateY(0px)';
+                    } else if (index === 1) {
+                        card.style.zIndex = '2';
+                        card.style.transform = 'scale(0.95) translateY(10px)';
+                    } else if (index === 2) {
+                        card.style.zIndex = '1';
+                        card.style.transform = 'scale(0.9) translateY(20px)';
+                    }
+                });
+            }
+
+            // Button actions
+            likeBtn.addEventListener('click', function() {
+                swipeCard('right');
+            });
+
+            dislikeBtn.addEventListener('click', function() {
+                swipeCard('left');
+            });
+
+            // Touch/swipe gestures for cards
+            let startX = 0;
+            let startY = 0;
+            let currentX = 0;
+            let currentY = 0;
+            let isDragging = false;
+
+            document.addEventListener('touchstart', function(e) {
+                const card = e.target.closest('.card[style*="z-index: 3"]');
+                if (!card) return;
+                
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                isDragging = true;
+            });
+
+            document.addEventListener('touchmove', function(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                
+                currentX = e.touches[0].clientX - startX;
+                currentY = e.touches[0].clientY - startY;
+                
+                const card = document.querySelector('.card[style*="z-index: 3"]');
+                if (card) {
+                    const rotation = currentX * 0.1;
+                    card.style.transform = `translateX(${currentX}px) translateY(${currentY}px) rotate(${rotation}deg)`;
+                    card.style.opacity = 1 - Math.abs(currentX) / 300;
+                }
+            });
+
+            document.addEventListener('touchend', function(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                
+                const card = document.querySelector('.card[style*="z-index: 3"]');
+                if (!card) return;
+                
+                if (Math.abs(currentX) > 100) {
+                    // Trigger swipe
+                    swipeCard(currentX > 0 ? 'right' : 'left');
+                } else {
+                    // Snap back
+                    card.style.transform = 'translateX(0) translateY(0) rotate(0deg)';
+                    card.style.opacity = '1';
+                }
+                
+                currentX = 0;
+                currentY = 0;
+            });
+
+            // Mouse drag support for desktop
+            let isMouseDragging = false;
+
+            document.addEventListener('mousedown', function(e) {
+                const card = e.target.closest('.card[style*="z-index: 3"]');
+                if (!card) return;
+                
+                startX = e.clientX;
+                startY = e.clientY;
+                isMouseDragging = true;
+                card.style.cursor = 'grabbing';
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isMouseDragging) return;
+                
+                currentX = e.clientX - startX;
+                currentY = e.clientY - startY;
+                
+                const card = document.querySelector('.card[style*="z-index: 3"]');
+                if (card) {
+                    const rotation = currentX * 0.1;
+                    card.style.transform = `translateX(${currentX}px) translateY(${currentY}px) rotate(${rotation}deg)`;
+                    card.style.opacity = 1 - Math.abs(currentX) / 300;
+                }
+            });
+
+            document.addEventListener('mouseup', function(e) {
+                if (!isMouseDragging) return;
+                isMouseDragging = false;
+                
+                const card = document.querySelector('.card[style*="z-index: 3"]');
+                if (!card) return;
+                
+                card.style.cursor = 'grab';
+                
+                if (Math.abs(currentX) > 100) {
+                    swipeCard(currentX > 0 ? 'right' : 'left');
+                } else {
+                    card.style.transform = 'translateX(0) translateY(0) rotate(0deg)';
+                    card.style.opacity = '1';
+                }
+                
+                currentX = 0;
+                currentY = 0;
+            });
+
+        })();
+    </script>
+</body>
+</html>

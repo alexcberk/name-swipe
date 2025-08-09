@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Heart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,10 +15,15 @@ interface SwipeCardProps {
 
 export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isSwipingAway, setIsSwipingAway] = useState(false);
-  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [exitingCard, setExitingCard] = useState<{ name: BabyName; x: number; rotate: number } | null>(null);
   const isSwipingRef = useRef(false);
   const queryClient = useQueryClient();
+  
+  // Reset currentIndex when names array changes (e.g., gender filter changes)
+  useEffect(() => {
+    setCurrentIndex(0);
+    setExitingCard(null);
+  }, [names]);
 
   const swipeActionMutation = useMutation({
     mutationFn: async (data: { nameId: string; action: SwipeActionType }) => {
@@ -36,46 +41,58 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
     },
   });
 
-  const handleSwipe = (action: SwipeActionType) => {
-    if (currentIndex >= names.length || isSwipingRef.current || isSwipingAway) return;
+  const handleSwipe = (action: SwipeActionType, velocity: number = 0) => {
+    if (currentIndex >= names.length) return;
     
-    isSwipingRef.current = true;
     const currentName = names[currentIndex];
     
-    // Set swipe animation
-    setIsSwipingAway(true);
-    setSwipeDirection(action === 'like' ? 'right' : 'left');
+    // Calculate exit distance based on velocity for more dynamic feel
+    const baseDistance = 500;
+    const velocityMultiplier = Math.min(Math.abs(velocity) / 500, 2);
+    const exitDistance = baseDistance * (1 + velocityMultiplier);
+    
+    // Set the exiting card with animation values
+    setExitingCard({
+      name: currentName,
+      x: action === 'like' ? exitDistance : -exitDistance,
+      rotate: action === 'like' ? 45 : -45
+    });
     
     // Record swipe action
     swipeActionMutation.mutate({ nameId: currentName.id, action });
     onSwipe(currentName.id, action);
     
-    // Move to next card after animation
+    // Immediately move to next card and allow new interactions
+    setCurrentIndex(prev => prev + 1);
+    
+    // Remove exiting card after animation completes
     setTimeout(() => {
-      setCurrentIndex(prev => prev + 1);
-      setIsSwipingAway(false);
-      setSwipeDirection(null);
-      isSwipingRef.current = false;
-    }, 300);
+      setExitingCard(null);
+    }, 400);
   };
 
   const handleDragEnd = (event: any, info: PanInfo) => {
-    // Prevent multiple swipes while already swiping
-    if (isSwipingRef.current || isSwipingAway) return;
-    
     const { offset, velocity } = info;
-    const swipeThreshold = 100;
-    const velocityThreshold = 300;
+    const swipeThreshold = 100; // Distance threshold
+    const velocityThreshold = 500; // Velocity threshold for flinging
     
-    // Check if user swiped far enough or fast enough
-    if (Math.abs(offset.x) > swipeThreshold || Math.abs(velocity.x) > velocityThreshold) {
+    // Check if user swiped far enough AND fast enough
+    if (Math.abs(offset.x) > swipeThreshold && Math.abs(velocity.x) > velocityThreshold) {
+      // Fast swipe - trigger action
       if (offset.x > 0) {
-        handleSwipe('like');
+        handleSwipe('like', velocity.x);
       } else {
-        handleSwipe('dislike');
+        handleSwipe('dislike', velocity.x);
+      }
+    } else if (Math.abs(offset.x) > swipeThreshold * 2) {
+      // Very far drag even if slow - trigger action
+      if (offset.x > 0) {
+        handleSwipe('like', velocity.x);
+      } else {
+        handleSwipe('dislike', velocity.x);
       }
     }
-    // If not swiped far enough, card will return to center automatically
+    // Otherwise, card will snap back to center automatically via the animate prop
   };
 
   if (currentIndex >= names.length) {
@@ -99,10 +116,11 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
       {/* Card Stack */}
       <div className="card-stack relative w-full max-w-sm h-80 mb-4">
         {/* Third card (background) */}
-        {thirdName && (
+        {thirdName && !exitingCard && (
           <motion.div 
             className="absolute inset-0 bg-white rounded-2xl shadow-md border-2 border-gray-100"
             style={{ zIndex: 1 }}
+            initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 0.9, y: 20 }}
           >
             <CardContent name={thirdName} />
@@ -110,51 +128,131 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
         )}
         
         {/* Second card (middle) */}
-        {nextName && (
+        {nextName && !exitingCard && (
           <motion.div 
             className="absolute inset-0 bg-white rounded-2xl shadow-lg border-2 border-gray-100"
             style={{ zIndex: 2 }}
+            initial={{ scale: 0.95, y: 10 }}
             animate={{ scale: 0.95, y: 10 }}
           >
             <CardContent name={nextName} />
           </motion.div>
         )}
         
-        {/* First card (top) */}
-        <motion.div
-          className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab"
-          style={{ zIndex: 3 }}
-          drag={isSwipingRef.current || isSwipingAway ? false : "x"}
-          dragConstraints={{ left: -200, right: 200 }}
-          dragElastic={0.2}
-          onDragEnd={handleDragEnd}
-          whileDrag={{ 
-            scale: 1.05,
-            transition: { duration: 0.1 }
-          }}
-          animate={{
-            x: isSwipingAway ? (swipeDirection === 'right' ? 400 : -400) : 0,
-            rotate: isSwipingAway ? (swipeDirection === 'right' ? 30 : -30) : 0,
-            opacity: isSwipingAway ? 0 : 1,
-            transition: { duration: 0.3, ease: "easeOut" }
-          }}
-        >
-          <CardContent name={currentName} />
-        </motion.div>
+        {/* When exiting, show the new stack underneath */}
+        {exitingCard && (
+          <>
+            {/* New third card */}
+            {thirdName && (
+              <motion.div 
+                className="absolute inset-0 bg-white rounded-2xl shadow-md border-2 border-gray-100"
+                style={{ zIndex: 1 }}
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 0.9, y: 20 }}
+              >
+                <CardContent name={thirdName} />
+              </motion.div>
+            )}
+            
+            {/* New second card */}
+            {nextName && (
+              <motion.div 
+                className="absolute inset-0 bg-white rounded-2xl shadow-lg border-2 border-gray-100"
+                style={{ zIndex: 2 }}
+                initial={{ scale: 0.95, y: 10 }}
+                animate={{ scale: 0.95, y: 10 }}
+              >
+                <CardContent name={nextName} />
+              </motion.div>
+            )}
+            
+            {/* New first card (what was the second card) */}
+            {currentName && (
+              <motion.div 
+                className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab"
+                style={{ zIndex: 3 }}
+                drag={false}
+                initial={{ scale: 0.95, y: 10 }}
+                animate={{ scale: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <CardContent name={currentName} />
+              </motion.div>
+            )}
+            
+            {/* Exiting card on top */}
+            <motion.div
+              className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100"
+              style={{ zIndex: 4, pointerEvents: 'none' }}
+              initial={{ x: 0, rotate: 0, scale: 1.05 }}
+              animate={{ 
+                x: exitingCard.x, 
+                rotate: exitingCard.rotate,
+                opacity: 0,
+                scale: 0.8
+              }}
+              transition={{ 
+                duration: 0.4, 
+                ease: [0.17, 0.67, 0.16, 1.0],
+                opacity: { duration: 0.3 }
+              }}
+            >
+              <CardContent name={exitingCard.name} />
+            </motion.div>
+          </>
+        )}
+        
+        {/* Current top card when not exiting */}
+        {!exitingCard && currentName && (
+          <motion.div
+            className="absolute inset-0 bg-white rounded-2xl shadow-xl border-2 border-gray-100 cursor-grab active:cursor-grabbing"
+            style={{ 
+              zIndex: 3,
+              transformOrigin: "center bottom"
+            }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+            dragElastic={1}
+            dragMomentum={false}
+            onDragEnd={handleDragEnd}
+            whileDrag={{ 
+              scale: 1.02,
+              cursor: "grabbing",
+            }}
+            animate={{ 
+              x: 0, 
+              rotate: 0,
+              scale: 1
+            }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 300, 
+              damping: 30,
+              mass: 0.8
+            }}
+            transformTemplate={({ x, scale }) => {
+              // Add rotation based on drag distance
+              const dragRotation = typeof x === 'string' ? 0 : (x as number) / 8;
+              return `translateX(${x}) rotate(${dragRotation}deg) scale(${scale})`;
+            }}
+          >
+            <CardContent name={currentName} />
+          </motion.div>
+        )}
       </div>
 
       {/* Action Buttons */}
       <div className="flex justify-center space-x-6">
         <Button
-          onClick={() => handleSwipe('dislike')}
-          disabled={isSwipingRef.current || isSwipingAway}
+          onClick={() => handleSwipe('dislike', 0)}
+          disabled={currentIndex >= names.length}
           className="floating-action w-12 h-12 bg-white rounded-full flex items-center justify-center text-dislike-red hover:bg-red-50 border-2 border-red-100 shadow-lg"
         >
           <X className="h-5 w-5" />
         </Button>
         <Button
-          onClick={() => handleSwipe('like')}
-          disabled={isSwipingRef.current || isSwipingAway}
+          onClick={() => handleSwipe('like', 0)}
+          disabled={currentIndex >= names.length}
           className="floating-action w-12 h-12 bg-white rounded-full flex items-center justify-center text-like-green hover:bg-green-50 border-2 border-green-100 shadow-lg"
         >
           <Heart className="h-5 w-5" />
