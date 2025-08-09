@@ -239,7 +239,7 @@ export default function Session() {
 
         {activeTab === 'matches' && (
           <div className="flex-1 overflow-y-auto">
-            <MatchesView sessionId={sessionId!} userId={userId} />
+            <MatchesView sessionId={sessionId!} userId={userId} genderFilter={genderFilter} />
           </div>
         )}
       </div>

@@ -10,16 +10,24 @@ import { apiRequest } from "@/lib/queryClient";
 interface MatchesViewProps {
   sessionId: string;
   userId?: string;
+  genderFilter?: 'all' | 'boy' | 'girl';
 }
 
-export default function MatchesView({ sessionId, userId }: MatchesViewProps) {
+export default function MatchesView({ sessionId, userId, genderFilter = 'all' }: MatchesViewProps) {
   const [sortBy, setSortBy] = useState<'alphabetical' | 'popularity'>('alphabetical');
   const queryClient = useQueryClient();
   
   // Get shared matches (both users liked)
-  const { data: sharedMatches = [], isLoading: sharedLoading } = useQuery<any[]>({
+  const { data: rawSharedMatches = [], isLoading: sharedLoading } = useQuery<any[]>({
     queryKey: ['/api/sessions', sessionId, 'matches'],
     enabled: !!sessionId,
+  });
+  
+  // Filter shared matches by gender
+  const sharedMatches = rawSharedMatches.filter((match: any) => {
+    if (genderFilter === 'all') return true;
+    const babyName = babyNamesDatabase.find(name => name.id === match.nameId);
+    return babyName && babyName.gender === genderFilter;
   });
   
   // Get individual user swipes (likes and dislikes)
@@ -46,7 +54,7 @@ export default function MatchesView({ sessionId, userId }: MatchesViewProps) {
     },
   });
   
-  // Enrich user likes with baby name data
+  // Enrich user likes with baby name data and apply gender filter
   const userLikes = userSwipes
     .filter((swipe: any) => swipe.action === 'like')
     .map((swipe: any) => {
@@ -56,9 +64,13 @@ export default function MatchesView({ sessionId, userId }: MatchesViewProps) {
         name: babyName
       };
     })
-    .filter((swipe: any) => swipe.name); // Only include swipes where we found the name
+    .filter((swipe: any) => {
+      if (!swipe.name) return false;
+      if (genderFilter === 'all') return true;
+      return swipe.name.gender === genderFilter;
+    });
   
-  // Enrich user dislikes with baby name data
+  // Enrich user dislikes with baby name data and apply gender filter
   const userDislikes = userSwipes
     .filter((swipe: any) => swipe.action === 'dislike')
     .map((swipe: any) => {
@@ -68,7 +80,11 @@ export default function MatchesView({ sessionId, userId }: MatchesViewProps) {
         name: babyName
       };
     })
-    .filter((swipe: any) => swipe.name);
+    .filter((swipe: any) => {
+      if (!swipe.name) return false;
+      if (genderFilter === 'all') return true;
+      return swipe.name.gender === genderFilter;
+    });
   
   // Sort matches based on selected option
   const sortMatches = (matches: any[]) => {
