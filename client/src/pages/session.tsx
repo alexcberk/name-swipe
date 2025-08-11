@@ -13,7 +13,14 @@ import type { BabyName, GenderFilter } from "@shared/schema";
 
 export default function Session() {
   const { sessionId } = useParams();
-  const [userId] = useState(() => crypto.randomUUID());
+  const [userId] = useState(() => {
+    const sessionKey = `userId_${sessionId}`;
+    const stored = localStorage.getItem(sessionKey);
+    if (stored) return stored;
+    const newId = crypto.randomUUID();
+    localStorage.setItem(sessionKey, newId);
+    return newId;
+  });
   const [activeTab, setActiveTab] = useState<'swipe' | 'matches'>('swipe');
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
   const [showShareModal, setShowShareModal] = useState(false);
