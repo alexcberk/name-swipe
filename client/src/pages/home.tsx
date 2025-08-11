@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,30 @@ import { useToast } from "@/hooks/use-toast";
 export default function Home() {
   const [sessionId, setSessionId] = useState("");
   const { toast } = useToast();
+  const [, navigate] = useLocation();
+
+  // Check if user already exists and redirect
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      navigate(`/u/${userId}`);
+    } else {
+      // Create new user and redirect
+      fetch('/api/users', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+        .then(res => res.json())
+        .then(user => {
+          localStorage.setItem('userId', user.id);
+          navigate(`/u/${user.id}`);
+        })
+        .catch(err => {
+          console.error('Failed to create user:', err);
+        });
+    }
+  }, [navigate]);
 
   const createSessionMutation = useMutation({
     mutationFn: async () => {

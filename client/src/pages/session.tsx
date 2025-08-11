@@ -203,7 +203,7 @@ export default function Session() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Session ID</p>
-                    <p className="font-semibold text-gray-800">#{sessionId?.slice(-6).toUpperCase()}</p>
+                    <p className="font-semibold text-gray-800">#{(session as any)?.shareCode || sessionId?.slice(-6).toUpperCase()}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-600">Partner status</p>

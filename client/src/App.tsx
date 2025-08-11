@@ -6,12 +6,17 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Session from "@/pages/session";
+import UserProfile from "@/pages/user-profile";
+import JoinSession from "@/pages/join-session";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/u/:userId" component={UserProfile} />
       <Route path="/session/:sessionId" component={Session} />
+      <Route path="/s/:sessionId" component={Session} />
+      <Route path="/join/:shareCode" component={JoinSession} />
       <Route component={NotFound} />
     </Switch>
   );

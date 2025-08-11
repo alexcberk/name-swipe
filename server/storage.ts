@@ -1,17 +1,31 @@
-import { type Session, type InsertSession, type SwipeAction, type InsertSwipeAction, type BabyName, type InsertBabyName } from "@shared/schema";
+import { type User, type InsertUser, type Session, type InsertSession, type SwipeAction, type InsertSwipeAction, type BabyName, type InsertBabyName, type UserSession, type InsertUserSession } from "@shared/schema";
+import { babyNamesDatabase } from "../client/src/lib/baby-names";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
+  // User management
+  createUser(user: InsertUser): Promise<User>;
+  getUser(id: string): Promise<User | undefined>;
+  updateUserActivity(id: string): Promise<void>;
+  
   // Session management
   createSession(session: InsertSession): Promise<Session>;
   getSession(id: string): Promise<Session | undefined>;
+  getSessionByShareCode(shareCode: string): Promise<Session | undefined>;
   deleteExpiredSessions(): Promise<void>;
+  
+  // User-Session relationships
+  addUserToSession(userSession: InsertUserSession): Promise<UserSession>;
+  getUserSessions(userId: string): Promise<UserSession[]>;
+  getSessionUsers(sessionId: string): Promise<UserSession[]>;
   
   // Swipe actions
   createSwipeAction(action: InsertSwipeAction): Promise<SwipeAction>;
+  getSwipeActionsByUser(userId: string): Promise<SwipeAction[]>;
   getSwipeActionsBySession(sessionId: string): Promise<SwipeAction[]>;
   getSwipeActionsBySessionAndUser(sessionId: string, userId: string): Promise<SwipeAction[]>;
   getMatches(sessionId: string): Promise<{ nameId: string; users: string[] }[]>;
+  getUserMatches(userId: string): Promise<{ nameId: string; matchType: 'personal' | 'session'; sessionId?: string }[]>;
   
   // Baby names
   getAllBabyNames(): Promise<BabyName[]>;
@@ -21,30 +35,72 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
+  private users: Map<string, User>;
   private sessions: Map<string, Session>;
+  private userSessions: Map<string, UserSession>;
   private swipeActions: Map<string, SwipeAction>;
   private babyNames: Map<string, BabyName>;
 
   constructor() {
+    this.users = new Map();
     this.sessions = new Map();
+    this.userSessions = new Map();
     this.swipeActions = new Map();
     this.babyNames = new Map();
     this.initializeBabyNames();
   }
 
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const id = randomUUID();
+    const user: User = {
+      id,
+      createdAt: new Date(),
+      lastActiveAt: new Date(),
+      preferences: insertUser.preferences || null,
+    };
+    this.users.set(id, user);
+    return user;
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async updateUserActivity(id: string): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      user.lastActiveAt = new Date();
+    }
+  }
+
   async createSession(insertSession: InsertSession): Promise<Session> {
     const id = randomUUID();
+    const shareCode = this.generateShareCode();
     const session: Session = {
       id,
       createdAt: new Date(),
       expiresAt: insertSession.expiresAt,
+      shareCode,
     };
     this.sessions.set(id, session);
     return session;
   }
 
+  private generateShareCode(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return code;
+  }
+
   async getSession(id: string): Promise<Session | undefined> {
     return this.sessions.get(id);
+  }
+
+  async getSessionByShareCode(shareCode: string): Promise<Session | undefined> {
+    return Array.from(this.sessions.values()).find(s => s.shareCode === shareCode);
   }
 
   async deleteExpiredSessions(): Promise<void> {
@@ -56,12 +112,35 @@ export class MemStorage implements IStorage {
     }
   }
 
+  async addUserToSession(insertUserSession: InsertUserSession): Promise<UserSession> {
+    const id = `${insertUserSession.userId}_${insertUserSession.sessionId}`;
+    const userSession: UserSession = {
+      ...insertUserSession,
+      joinedAt: new Date(),
+    };
+    this.userSessions.set(id, userSession);
+    return userSession;
+  }
+
+  async getUserSessions(userId: string): Promise<UserSession[]> {
+    return Array.from(this.userSessions.values()).filter(
+      us => us.userId === userId
+    );
+  }
+
+  async getSessionUsers(sessionId: string): Promise<UserSession[]> {
+    return Array.from(this.userSessions.values()).filter(
+      us => us.sessionId === sessionId
+    );
+  }
+
   async createSwipeAction(insertAction: InsertSwipeAction): Promise<SwipeAction> {
     // Check if there's already a swipe for this user + name combination
     const existingAction = Array.from(this.swipeActions.values()).find(
       action => action.userId === insertAction.userId && 
                 action.nameId === insertAction.nameId &&
-                action.sessionId === insertAction.sessionId
+                action.sessionId === insertAction.sessionId &&
+                action.isGlobal === insertAction.isGlobal
     );
     
     if (existingAction) {
@@ -75,11 +154,19 @@ export class MemStorage implements IStorage {
       const action: SwipeAction = {
         id,
         ...insertAction,
+        sessionId: insertAction.sessionId || null,
+        isGlobal: insertAction.isGlobal || true,
         createdAt: new Date(),
       };
       this.swipeActions.set(id, action);
       return action;
     }
+  }
+
+  async getSwipeActionsByUser(userId: string): Promise<SwipeAction[]> {
+    return Array.from(this.swipeActions.values()).filter(
+      action => action.userId === userId
+    );
   }
 
   async getSwipeActionsBySession(sessionId: string): Promise<SwipeAction[]> {
@@ -98,19 +185,49 @@ export class MemStorage implements IStorage {
     const actions = await this.getSwipeActionsBySession(sessionId);
     const likes = actions.filter(action => action.action === 'like');
     
-    const nameGroups = new Map<string, string[]>();
+    const nameGroups = new Map<string, Set<string>>();
     
     for (const like of likes) {
       if (!nameGroups.has(like.nameId)) {
-        nameGroups.set(like.nameId, []);
+        nameGroups.set(like.nameId, new Set());
       }
-      nameGroups.get(like.nameId)!.push(like.userId);
+      nameGroups.get(like.nameId)!.add(like.userId);
     }
     
     // Only return names that have been liked by more than one user
     return Array.from(nameGroups.entries())
-      .filter(([_, users]) => users.length > 1)
-      .map(([nameId, users]) => ({ nameId, users }));
+      .filter(([_, users]) => users.size > 1)
+      .map(([nameId, users]) => ({ nameId, users: Array.from(users) }));
+  }
+
+  async getUserMatches(userId: string): Promise<{ nameId: string; matchType: 'personal' | 'session'; sessionId?: string }[]> {
+    const userActions = await this.getSwipeActionsByUser(userId);
+    const likes = userActions.filter(action => action.action === 'like');
+    
+    const matches: { nameId: string; matchType: 'personal' | 'session'; sessionId?: string }[] = [];
+    
+    // Personal matches (user's own likes)
+    const personalLikes = likes.filter(like => like.isGlobal);
+    for (const like of personalLikes) {
+      if (!matches.find(m => m.nameId === like.nameId)) {
+        matches.push({ nameId: like.nameId, matchType: 'personal' });
+      }
+    }
+    
+    // Session matches (matched with partners)
+    const sessionLikes = likes.filter(like => like.sessionId);
+    for (const like of sessionLikes) {
+      if (like.sessionId) {
+        const sessionMatches = await this.getMatches(like.sessionId);
+        for (const match of sessionMatches) {
+          if (match.users.includes(userId) && !matches.find(m => m.nameId === match.nameId && m.sessionId === like.sessionId)) {
+            matches.push({ nameId: match.nameId, matchType: 'session', sessionId: like.sessionId });
+          }
+        }
+      }
+    }
+    
+    return matches;
   }
 
   async getAllBabyNames(): Promise<BabyName[]> {
@@ -131,7 +248,13 @@ export class MemStorage implements IStorage {
   }
 
   async initializeBabyNames(): Promise<void> {
-    const names: BabyName[] = [
+    // Use the comprehensive baby names database
+    for (const name of babyNamesDatabase) {
+      this.babyNames.set(name.id, name);
+    }
+    
+    // Keep a few curated top names for quick testing
+    const curatedNames: BabyName[] = [
       // 2025 Top Boys Names (1-50)
       { id: 'liam', name: 'Liam', gender: 'boy', origin: 'Irish', meaning: '"Strong-willed warrior and protector". Most popular name for 6th consecutive year.', rank: 1, category: 'Modern' },
       { id: 'noah', name: 'Noah', gender: 'boy', origin: 'Hebrew', meaning: '"Rest" or "comfort". Biblical name with enduring appeal.', rank: 2, category: 'Traditional' },
@@ -236,8 +359,13 @@ export class MemStorage implements IStorage {
       { id: 'quinn', name: 'Quinn', gender: 'girl', origin: 'Irish', meaning: '"Descendant of Conn". Strong unisex choice.', rank: 49, category: 'Modern' },
       { id: 'adeline', name: 'Adeline', gender: 'girl', origin: 'Germanic', meaning: '"Noble" or "nobility". Sweet vintage choice.', rank: 50, category: 'Classic' }
     ];
-
-    // Additional trending and historical names from 2021-2024
+    
+    // Add curated names (will overwrite if they exist)
+    for (const name of curatedNames) {
+      this.babyNames.set(name.id, name);
+    }
+    
+    // Additional trending and historical names from 2021-2024 (keeping for completeness)
     const additionalNames: BabyName[] = [
       // More 2025 trending boys names
       { id: 'beau', name: 'Beau', gender: 'boy', origin: 'French', meaning: '"Handsome". French word with southern charm.', rank: 51, category: 'Modern' },
@@ -302,8 +430,8 @@ export class MemStorage implements IStorage {
       { id: 'samantha', name: 'Samantha', gender: 'girl', origin: 'Hebrew', meaning: '"Listener". Modern invention with classic feel.', rank: 80, category: 'Modern' }
     ];
     
-    const allNames = [...names, ...additionalNames];
-    for (const name of allNames) {
+    // Add additional names (will overwrite if they exist)
+    for (const name of additionalNames) {
       this.babyNames.set(name.id, name);
     }
   }
