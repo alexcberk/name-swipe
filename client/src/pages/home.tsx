@@ -13,29 +13,15 @@ export default function Home() {
   const [sessionId, setSessionId] = useState("");
   const { toast } = useToast();
   const [, navigate] = useLocation();
-
-  // Check if user already exists and redirect
-  useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    if (userId) {
-      navigate(`/u/${userId}`);
-    } else {
-      // Create new user and redirect
-      fetch('/api/users', { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
-      })
-        .then(res => res.json())
-        .then(user => {
-          localStorage.setItem('userId', user.id);
-          navigate(`/u/${user.id}`);
-        })
-        .catch(err => {
-          console.error('Failed to create user:', err);
-        });
+  
+  // Ensure global userId persists
+  useState(() => {
+    const existingUserId = localStorage.getItem('globalUserId');
+    if (!existingUserId) {
+      const newGlobalUserId = crypto.randomUUID();
+      localStorage.setItem('globalUserId', newGlobalUserId);
     }
-  }, [navigate]);
+  });
 
   const createSessionMutation = useMutation({
     mutationFn: async () => {

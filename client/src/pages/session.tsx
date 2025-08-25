@@ -14,12 +14,14 @@ import type { BabyName, GenderFilter } from "@shared/schema";
 export default function Session() {
   const { sessionId } = useParams();
   const [userId] = useState(() => {
-    const sessionKey = `userId_${sessionId}`;
-    const stored = localStorage.getItem(sessionKey);
-    if (stored) return stored;
-    const newId = crypto.randomUUID();
-    localStorage.setItem(sessionKey, newId);
-    return newId;
+    // Use global user ID that persists across all sessions
+    const globalUserId = localStorage.getItem('globalUserId');
+    if (globalUserId) return globalUserId;
+    
+    // Create new global user ID if none exists
+    const newGlobalUserId = crypto.randomUUID();
+    localStorage.setItem('globalUserId', newGlobalUserId);
+    return newGlobalUserId;
   });
   const [activeTab, setActiveTab] = useState<'swipe' | 'matches'>('swipe');
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
@@ -78,7 +80,7 @@ export default function Session() {
 
   // Fetch user's swipes to filter out already swiped names
   const { data: userSwipes = [] } = useQuery<any[]>({
-    queryKey: ['/api/sessions', sessionId, 'users', userId, 'swipes'],
+    queryKey: ['/api/users', userId, 'swipes'],
     enabled: !!sessionId,
   });
 

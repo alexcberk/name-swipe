@@ -36,7 +36,7 @@ export default function SwipeCard({ names, sessionId, userId, onSwipe }: SwipeCa
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sessions', sessionId, 'users', userId, 'swipes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users', userId, 'swipes'] });
       queryClient.invalidateQueries({ queryKey: ['/api/sessions', sessionId, 'matches'] });
     },
   });

@@ -32,8 +32,8 @@ export default function MatchesView({ sessionId, userId, genderFilter = 'all' }:
   
   // Get individual user swipes (likes and dislikes)
   const { data: userSwipes = [], isLoading: userLoading } = useQuery<any[]>({
-    queryKey: ['/api/sessions', sessionId, 'users', userId, 'swipes'],
-    enabled: !!sessionId && !!userId,
+    queryKey: ['/api/users', userId, 'swipes'],
+    enabled: !!userId,
   });
   
   // Mutation for updating swipe actions
@@ -49,14 +49,23 @@ export default function MatchesView({ sessionId, userId, genderFilter = 'all' }:
     },
     onSuccess: () => {
       // Immediately invalidate queries for fast UI update
-      queryClient.invalidateQueries({ queryKey: ['/api/sessions', sessionId, 'users', userId, 'swipes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users', userId, 'swipes'] });
       queryClient.invalidateQueries({ queryKey: ['/api/sessions', sessionId, 'matches'] });
     },
   });
   
   // Enrich user likes with baby name data and apply gender filter
-  const userLikes = userSwipes
+  // Deduplicate by nameId to avoid showing the same name multiple times
+  const uniqueLikesByNameId = new Map();
+  userSwipes
     .filter((swipe: any) => swipe.action === 'like')
+    .forEach((swipe: any) => {
+      if (!uniqueLikesByNameId.has(swipe.nameId)) {
+        uniqueLikesByNameId.set(swipe.nameId, swipe);
+      }
+    });
+  
+  const userLikes = Array.from(uniqueLikesByNameId.values())
     .map((swipe: any) => {
       const babyName = babyNamesDatabase.find(name => name.id === swipe.nameId);
       return {
@@ -71,8 +80,17 @@ export default function MatchesView({ sessionId, userId, genderFilter = 'all' }:
     });
   
   // Enrich user dislikes with baby name data and apply gender filter
-  const userDislikes = userSwipes
+  // Deduplicate by nameId to avoid showing the same name multiple times
+  const uniqueDislikesByNameId = new Map();
+  userSwipes
     .filter((swipe: any) => swipe.action === 'dislike')
+    .forEach((swipe: any) => {
+      if (!uniqueDislikesByNameId.has(swipe.nameId)) {
+        uniqueDislikesByNameId.set(swipe.nameId, swipe);
+      }
+    });
+  
+  const userDislikes = Array.from(uniqueDislikesByNameId.values())
     .map((swipe: any) => {
       const babyName = babyNamesDatabase.find(name => name.id === swipe.nameId);
       return {
