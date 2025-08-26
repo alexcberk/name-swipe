@@ -52,20 +52,27 @@ export default function MatchesView({ sessionId, userId, genderFilter = 'all' }:
       queryClient.invalidateQueries({ queryKey: ['/api/users', userId, 'swipes'] });
       queryClient.invalidateQueries({ queryKey: ['/api/sessions', sessionId, 'matches'] });
     },
+    onError: (error) => {
+      console.error('Failed to update swipe action:', error);
+    },
   });
   
-  // Enrich user likes with baby name data and apply gender filter
-  // Deduplicate by nameId to avoid showing the same name multiple times
-  const uniqueLikesByNameId = new Map();
-  userSwipes
-    .filter((swipe: any) => swipe.action === 'like')
-    .forEach((swipe: any) => {
-      if (!uniqueLikesByNameId.has(swipe.nameId)) {
-        uniqueLikesByNameId.set(swipe.nameId, swipe);
-      }
-    });
+  // Process user swipes to get the most recent action for each name
+  // This handles cases where a user changes their mind (like -> dislike or vice versa)
+  const latestSwipesByNameId = new Map();
+  userSwipes.forEach((swipe: any) => {
+    const existing = latestSwipesByNameId.get(swipe.nameId);
+    if (!existing || new Date(swipe.createdAt) > new Date(existing.createdAt)) {
+      latestSwipesByNameId.set(swipe.nameId, swipe);
+    }
+  });
   
-  const userLikes = Array.from(uniqueLikesByNameId.values())
+  // Get the latest swipes as an array
+  const latestSwipes = Array.from(latestSwipesByNameId.values());
+  
+  // Filter and enrich likes
+  const userLikes = latestSwipes
+    .filter((swipe: any) => swipe.action === 'like')
     .map((swipe: any) => {
       const babyName = babyNamesDatabase.find(name => name.id === swipe.nameId);
       return {
@@ -79,18 +86,9 @@ export default function MatchesView({ sessionId, userId, genderFilter = 'all' }:
       return swipe.name.gender === genderFilter;
     });
   
-  // Enrich user dislikes with baby name data and apply gender filter
-  // Deduplicate by nameId to avoid showing the same name multiple times
-  const uniqueDislikesByNameId = new Map();
-  userSwipes
+  // Filter and enrich dislikes
+  const userDislikes = latestSwipes
     .filter((swipe: any) => swipe.action === 'dislike')
-    .forEach((swipe: any) => {
-      if (!uniqueDislikesByNameId.has(swipe.nameId)) {
-        uniqueDislikesByNameId.set(swipe.nameId, swipe);
-      }
-    });
-  
-  const userDislikes = Array.from(uniqueDislikesByNameId.values())
     .map((swipe: any) => {
       const babyName = babyNamesDatabase.find(name => name.id === swipe.nameId);
       return {
@@ -222,6 +220,7 @@ export default function MatchesView({ sessionId, userId, genderFilter = 'all' }:
                           variant="outline"
                           className="w-8 h-8 p-0 border-red-200 hover:bg-red-50"
                           onClick={() => handleSwipeAction(match.nameId, 'dislike')}
+                          disabled={swipeActionMutation.isPending}
                         >
                           <X className="h-4 w-4 text-red-500" />
                         </Button>
@@ -231,6 +230,7 @@ export default function MatchesView({ sessionId, userId, genderFilter = 'all' }:
                           variant="outline"
                           className="w-8 h-8 p-0 border-green-200 hover:bg-green-50"
                           onClick={() => handleSwipeAction(match.nameId, 'like')}
+                          disabled={swipeActionMutation.isPending}
                         >
                           <Heart className="h-4 w-4 text-green-500" />
                         </Button>
