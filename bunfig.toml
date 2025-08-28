@@ -1,0 +1,11 @@
+# Bun configuration
+[install]
+peer = true
+dev = true
+
+[install.lockfile]
+save = true
+
+[run]
+# Automatically load .env files
+dotenv = true

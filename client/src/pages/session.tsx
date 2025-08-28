@@ -1,18 +1,18 @@
 import React, { useState } from "react";
 import { useParams, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Baby, Share2 } from "lucide-react";
 import SwipeCard from "@/components/swipe-card";
 import BottomNavigation from "@/components/bottom-navigation";
 import MatchesView from "@/components/matches-view";
 import ShareModal from "@/components/share-modal";
 import { Button } from "@/components/ui/button";
-import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
 import type { BabyName, GenderFilter } from "@shared/schema";
 
 export default function Session() {
   const { sessionId } = useParams();
+  const queryClient = useQueryClient();
   const [userId] = useState(() => {
     // Use global user ID that persists across all sessions
     const globalUserId = localStorage.getItem('globalUserId');
@@ -28,44 +28,7 @@ export default function Session() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [partnerConnected, setPartnerConnected] = useState(false);
   const { toast } = useToast();
-
-  // WebSocket connection
-  const { sendMessage } = useWebSocket({
-    onConnect: () => {
-      sendMessage({
-        type: 'join_session',
-        sessionId: sessionId!,
-        userId,
-      });
-    },
-    onMessage: (message) => {
-      switch (message.type) {
-        case 'partner_connected':
-          setPartnerConnected(true);
-          toast({
-            title: "Partner Connected",
-            description: "Your partner has joined the session!",
-            duration: 2000,
-          });
-          break;
-        case 'partner_disconnected':
-          setPartnerConnected(false);
-          toast({
-            title: "Partner Disconnected",
-            description: "Your partner has left the session.",
-            duration: 2000,
-          });
-          break;
-        case 'new_match':
-          toast({
-            title: "New Match! ❤️",
-            description: "You both liked this name!",
-            duration: 1500,
-          });
-          break;
-      }
-    },
-  });
+  const [previousMatchCount, setPreviousMatchCount] = useState<number>(0);
 
   // Fetch session details
   const { data: session, isLoading: sessionLoading } = useQuery({
@@ -83,6 +46,38 @@ export default function Session() {
     queryKey: ['/api/users', userId, 'swipes'],
     enabled: !!sessionId,
   });
+  
+  // Fetch matches with polling for real-time updates
+  const { data: matches = [] } = useQuery<any[]>({
+    queryKey: [`/api/sessions/${sessionId}/matches`],
+    enabled: !!sessionId,
+    refetchInterval: 2000, // Poll every 2 seconds
+    refetchIntervalInBackground: true,
+  });
+  
+  // Check for new matches and show toast
+  React.useEffect(() => {
+    if (matches.length > previousMatchCount && previousMatchCount > 0) {
+      toast({
+        title: "New Match! ❤️",
+        description: "You both liked this name!",
+        duration: 1500,
+      });
+    }
+    setPreviousMatchCount(matches.length);
+  }, [matches.length, previousMatchCount, toast, setPreviousMatchCount]);
+  
+  // Check for partner connection status
+  const { data: sessionUsers = [] } = useQuery<any[]>({
+    queryKey: [`/api/sessions/${sessionId}/users`],
+    enabled: !!sessionId,
+    refetchInterval: 3000, // Poll every 3 seconds
+  });
+  
+  React.useEffect(() => {
+    const hasPartner = sessionUsers.length > 1;
+    setPartnerConnected(hasPartner);
+  }, [sessionUsers]);
 
   const availableNames = React.useMemo(() => {
     if (genderFilter === 'all') {
@@ -237,10 +232,10 @@ export default function Session() {
               sessionId={sessionId!}
               userId={userId}
               onSwipe={(nameId, action) => {
-                sendMessage({
-                  type: 'swipe_action',
-                  data: { nameId, action },
-                });
+                // Invalidate matches after swipe for real-time updates
+                setTimeout(() => {
+                  queryClient.invalidateQueries({ queryKey: [`/api/sessions/${sessionId}/matches`] });
+                }, 500);
               }}
             />
           </div>

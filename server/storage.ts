@@ -18,6 +18,7 @@ export interface IStorage {
   addUserToSession(userSession: InsertUserSession): Promise<UserSession>;
   getUserSessions(userId: string): Promise<UserSession[]>;
   getSessionUsers(sessionId: string): Promise<UserSession[]>;
+  getRecentSessionUsers(sessionId: string): Promise<any[]>;
   
   // Swipe actions
   createSwipeAction(action: InsertSwipeAction): Promise<SwipeAction>;
@@ -132,6 +133,17 @@ export class MemStorage implements IStorage {
     return Array.from(this.userSessions.values()).filter(
       us => us.sessionId === sessionId
     );
+  }
+  
+  async getRecentSessionUsers(sessionId: string): Promise<any[]> {
+    // Get users who have swiped in this session in the last 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const sessionSwipes = Array.from(this.swipeActions.values()).filter(
+      swipe => swipe.sessionId === sessionId && swipe.createdAt > fiveMinutesAgo
+    );
+    
+    const uniqueUserIds = [...new Set(sessionSwipes.map(s => s.userId))];
+    return uniqueUserIds.map(id => ({ userId: id, active: true }));
   }
 
   async createSwipeAction(insertAction: InsertSwipeAction): Promise<SwipeAction> {
