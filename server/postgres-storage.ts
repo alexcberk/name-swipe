@@ -257,8 +257,8 @@ export class PostgresStorage implements IStorage {
     if (!this.initialized) {
       await this.initializeBabyNames();
     }
-    
-    return await this.db.select().from(babyNames);
+
+    return await this.db.select().from(babyNames).orderBy(babyNames.rank);
   }
 
   async getBabyNamesByGender(gender: string): Promise<BabyName[]> {
@@ -266,17 +266,18 @@ export class PostgresStorage implements IStorage {
     if (!this.initialized) {
       await this.initializeBabyNames();
     }
-    
+
     if (gender === 'all') {
       return this.getAllBabyNames();
     }
-    
+
     return await this.db
       .select()
       .from(babyNames)
       .where(
         sqlOperator`${babyNames.gender} = ${gender} OR ${babyNames.gender} = 'unisex'`
-      );
+      )
+      .orderBy(babyNames.rank);
   }
 
   async getBabyNameById(id: string): Promise<BabyName | undefined> {
