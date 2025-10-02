@@ -135,6 +135,23 @@ export class PostgresStorage implements IStorage {
       .where(eq(userSessions.sessionId, sessionId));
   }
 
+  async getRecentSessionUsers(sessionId: string): Promise<any[]> {
+    // Get users who have swiped in this session in the last 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const recentSwipes = await this.db
+      .select()
+      .from(swipeActions)
+      .where(
+        and(
+          eq(swipeActions.sessionId, sessionId),
+          sqlOperator`${swipeActions.createdAt} > ${fiveMinutesAgo}`
+        )
+      );
+
+    const uniqueUserIds = [...new Set(recentSwipes.map(s => s.userId))];
+    return uniqueUserIds.map(userId => ({ userId, active: true }));
+  }
+
   async createSwipeAction(insertAction: InsertSwipeAction): Promise<SwipeAction> {
     // Check if there's already a swipe for this user + name combination
     const existingActions = await this.db

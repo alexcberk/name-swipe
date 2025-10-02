@@ -1,46 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <defs>
-    <style>
-      @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-10px); }
-      }
-      .baby { animation: bounce 1s ease-in-out infinite; }
-    </style>
-  </defs>
-
-  <!-- Background circle with gradient -->
-  <circle cx="50" cy="50" r="48" fill="url(#grad)" />
-  <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FDF2F8;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#FAE8FF;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-
-  <!-- Baby emoji styled -->
-  <g class="baby" transform="translate(50, 55)">
-    <!-- Head -->
-    <circle cx="0" cy="-5" r="18" fill="#FFDAB9" />
-
-    <!-- Eyes -->
-    <circle cx="-6" cy="-8" r="2" fill="#000" />
-    <circle cx="6" cy="-8" r="2" fill="#000" />
-
-    <!-- Mouth -->
-    <path d="M -4,-2 Q 0,0 4,-2" stroke="#000" stroke-width="1.5" fill="none" stroke-linecap="round" />
-
-    <!-- Hair tuft -->
-    <path d="M -3,-20 Q 0,-24 3,-20" stroke="#8B4513" stroke-width="2" fill="none" stroke-linecap="round" />
-
-    <!-- Body -->
-    <ellipse cx="0" cy="12" rx="14" ry="12" fill="#FFE4E1" />
-
-    <!-- Arms -->
-    <ellipse cx="-12" cy="8" rx="4" ry="8" fill="#FFDAB9" transform="rotate(-20 -12 8)" />
-    <ellipse cx="12" cy="8" rx="4" ry="8" fill="#FFDAB9" transform="rotate(20 12 8)" />
-  </g>
-
-  <!-- Heart accent (Tinder-style) -->
-  <path d="M 75,25 Q 75,20 80,20 Q 85,20 85,25 Q 85,30 80,35 L 75,30 Q 75,25 75,25 Z" fill="#FF6B6B" opacity="0.8" />
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fe3c72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M9 12h.01"></path>
+  <path d="M15 12h.01"></path>
+  <path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"></path>
+  <path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"></path>
 </svg>
