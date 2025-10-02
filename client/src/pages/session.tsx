@@ -8,6 +8,7 @@ import MatchesView from "@/components/matches-view";
 import ShareModal from "@/components/share-modal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { generateUUID } from "@/lib/uuid";
 import type { BabyName, GenderFilter } from "@shared/schema";
 
 export default function Session() {
@@ -17,9 +18,9 @@ export default function Session() {
     // Use global user ID that persists across all sessions
     const globalUserId = localStorage.getItem('globalUserId');
     if (globalUserId) return globalUserId;
-    
+
     // Create new global user ID if none exists
-    const newGlobalUserId = crypto.randomUUID();
+    const newGlobalUserId = generateUUID();
     localStorage.setItem('globalUserId', newGlobalUserId);
     return newGlobalUserId;
   });

@@ -8,6 +8,7 @@ import { Baby, Heart, Users, ArrowRight } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { generateUUID } from "@/lib/uuid";
 
 export default function Home() {
   const [sessionId, setSessionId] = useState("");
@@ -18,7 +19,7 @@ export default function Home() {
   useState(() => {
     const existingUserId = localStorage.getItem('globalUserId');
     if (!existingUserId) {
-      const newGlobalUserId = crypto.randomUUID();
+      const newGlobalUserId = generateUUID();
       localStorage.setItem('globalUserId', newGlobalUserId);
     }
   });
