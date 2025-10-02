@@ -90,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/sessions", async (req, res) => {
     try {
       const { userId } = req.body;
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year (effectively no expiration)
       const session = await storage.createSession({ expiresAt });
       
       // If userId provided, add user to session as owner
@@ -116,11 +116,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Session not found" });
       }
       
-      // Check if expired
-      if (session.expiresAt < new Date()) {
-        return res.status(410).json({ message: "Session expired" });
-      }
-      
+      // Check if expired - disabled
+      // if (session.expiresAt < new Date()) {
+      //   return res.status(410).json({ message: "Session expired" });
+      // }
+
       res.json(session);
     } catch (error) {
       res.status(500).json({ message: "Failed to get session" });
@@ -142,12 +142,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!session) {
         return res.status(404).json({ message: "Session not found" });
       }
-      
-      // Check if expired
-      if (session.expiresAt < new Date()) {
-        return res.status(410).json({ message: "Session expired" });
-      }
-      
+
+      // Check if expired - disabled
+      // if (session.expiresAt < new Date()) {
+      //   return res.status(410).json({ message: "Session expired" });
+      // }
+
       // Add user to session as partner
       const userSession = await storage.addUserToSession({
         userId,
@@ -168,12 +168,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!session) {
         return res.status(404).json({ message: "Session not found" });
       }
-      
-      // Check if expired
-      if (session.expiresAt < new Date()) {
-        return res.status(410).json({ message: "Session expired" });
-      }
-      
+
+      // Check if expired - disabled
+      // if (session.expiresAt < new Date()) {
+      //   return res.status(410).json({ message: "Session expired" });
+      // }
+
       // Get session users
       const users = await storage.getSessionUsers(session.id);
       

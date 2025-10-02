@@ -8,14 +8,22 @@ BabySwipe (NameSwipe) is a collaborative baby name selection application that al
 
 ## Commands
 
+**Note:** This project uses **Bun** as the runtime (not Node.js/npm). All commands should use `bun run` or just `bun`.
+
 ### Development
-- `npm run dev` - Start development server with hot reload (runs server/index.ts)
-- `npm run check` - Run TypeScript type checking
-- `npm run build` - Build for production (Vite for frontend, esbuild for backend)
-- `npm start` - Run production build
+- `bun run dev` - Start development server with hot reload (runs server/index.ts)
+- `bun run dev:node` - Start with Node.js/tsx (fallback)
+- `bun run dev:local` - Start with local database
+- `bun run check` - Run TypeScript type checking
+- `bun run build` - Build for production (Vite for frontend, esbuild for backend)
+- `bun run start` - Run production build
 
 ### Database
-- `npm run db:push` - Push schema changes to PostgreSQL using Drizzle Kit
+- `bun run db:push` - Push schema changes to PostgreSQL using Drizzle Kit
+- `bun run db:setup` - Setup local database
+- `bun run db:start` - Start PostgreSQL via Docker
+- `bun run db:stop` - Stop PostgreSQL
+- `bun run db:reset` - Reset database completely
 
 ## Architecture
 
@@ -68,13 +76,59 @@ BabySwipe (NameSwipe) is a collaborative baby name selection application that al
 
 ### Environment Variables
 - `DATABASE_URL` - PostgreSQL connection string (required)
-- `PORT` - Server port (default: 5000)
+- `PORT` - Server port (production: 5000, dev: varies)
 - `NODE_ENV` - Environment mode (development/production)
 
 ## Development Notes
-- Server runs on port specified by PORT env var (only non-firewalled port)
+- Server runs on port specified by PORT env var (production uses 5000)
 - Vite dev server is integrated with Express in development mode
 - Production build outputs to `/dist` with static files in `/dist/public`
 - WebSocket reconnection implements exponential backoff (max 5 attempts)
 - Session data expires after 24 hours automatically
 - The storage layer is abstracted for easy database integration
+
+## Production Deployment
+
+### Prerequisites
+- Bun runtime installed
+- PostgreSQL database (local or Neon)
+- Nginx web server
+- systemd for service management
+
+### Deployment Steps
+
+1. **Build the application**
+   ```bash
+   bun run build
+   ```
+
+2. **Update systemd service** (if needed)
+   - Service file: `/etc/systemd/system/nameswipe.service`
+   - Ensure PORT=5000 in environment variables
+   - Verify DATABASE_URL is correct
+
+3. **Reload and restart service**
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl restart nameswipe
+   sudo systemctl status nameswipe
+   ```
+
+4. **Verify nginx configuration**
+   - Config file: `/etc/nginx/sites-available/nameswipe`
+   - Proxy should point to `http://localhost:5000`
+   - Test config: `sudo nginx -t`
+   - Reload nginx: `sudo systemctl reload nginx`
+
+5. **Check logs**
+   ```bash
+   sudo journalctl -u nameswipe -f
+   ```
+
+### Troubleshooting
+- If database auth fails, reset password:
+  ```bash
+  echo "ALTER USER nameswipe WITH PASSWORD 'nameswipe_secure_password';" | sudo -u postgres psql -d nameswipe
+  ```
+- Ensure ports match: systemd service PORT=5000, nginx proxy to localhost:5000
+- Check service status: `sudo systemctl status nameswipe nginx postgresql`
