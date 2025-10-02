@@ -1,50 +1,64 @@
 import express, { type Request, Response, NextFunction } from "express";
+import pinoHttp from "pino-http";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { logger, createLogger } from "./logger";
+import { startResourceMonitoring } from "./monitoring";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
+// Use pino-http for automatic request logging
+app.use(pinoHttp({
+  logger,
+  autoLogging: {
+    ignore: (req) => {
+      // Only log API routes, skip static assets and websocket upgrades
+      return !req.url?.startsWith('/api');
     }
-  });
-
-  next();
-});
+  },
+  customLogLevel: (_req, res, err) => {
+    if (res.statusCode >= 500 || err) {
+      return 'error';
+    } else if (res.statusCode >= 400) {
+      return 'warn';
+    }
+    return 'info';
+  },
+  serializers: {
+    req: (req) => ({
+      method: req.method,
+      url: req.url,
+      headers: {
+        'user-agent': req.headers['user-agent']
+      }
+    }),
+    res: (res) => ({
+      statusCode: res.statusCode
+    })
+  }
+}));
 
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    // Log the error with pino
+    logger.error({
+      err,
+      req: {
+        method: req.method,
+        url: req.url,
+        headers: req.headers
+      },
+      statusCode: status
+    }, `Error handling request: ${message}`);
+
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after
@@ -65,5 +79,9 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || '3005', 10);
   server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
+
+    // Start resource monitoring (every 5 minutes in production, 15 in dev)
+    const monitoringInterval = process.env.NODE_ENV === 'production' ? 5 : 15;
+    startResourceMonitoring(monitoringInterval);
   });
 })();

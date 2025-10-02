@@ -3,10 +3,13 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertSessionSchema, insertSwipeActionSchema, genderFilterSchema, insertUserSessionSchema } from "@shared/schema";
 import { z } from "zod";
+import { createLogger } from "./logger";
+
+const logger = createLogger('routes');
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
-  console.log('🏗️ HTTP server created');
+  logger.info('HTTP server created');
 
   // API Routes
   
